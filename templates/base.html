@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ user.preferences.theme if user else 'dark' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HackingGPT - Advanced Cybersecurity Assistant{% endblock %}</title>
+    
+    <!-- CSS Framework and Custom Styles -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    
+    <style>
+        :root[data-theme="dark"] {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --accent-blue: #00d4ff;
+            --accent-green: #00ff88;
+            --accent-pink: #ff0080;
+            --accent-yellow: #ffff00;
+            --border-color: #333333;
+        }
+        
+        :root[data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --accent-blue: #007bff;
+            --accent-green: #28a745;
+            --accent-pink: #e83e8c;
+            --accent-yellow: #ffc107;
+            --border-color: #dee2e6;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+        
+        .neon-glow {
+            text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
+        }
+        
+        .terminal-border {
+            border: 2px solid var(--accent-blue);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        .command-output {
+            background-color: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-green);
+            font-family: 'Courier New', monospace;
+        }
+        
+        .risk-high { color: #ff4444; }
+        .risk-medium { color: #ffaa00; }
+        .risk-low { color: #44ff44; }
+        
+        .loading-spinner {
+            border: 3px solid var(--bg-tertiary);
+            border-top: 3px solid var(--accent-blue);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .matrix-bg {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            background-attachment: fixed;
+        }
+        
+        .cyber-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-cyber {
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-pink));
+            border: none;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cyber:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 212, 255, 0.4);
+        }
+        
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            height: 100vh;
+            position: fixed;
+            width: 250px;
+            z-index: 1000;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+        }
+        
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .chat-message.user {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-blue);
+        }
+        
+        .chat-message.assistant {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-green);
+        }
+        
+        .chat-message.system {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+        }
+        
+        pre {
+            background: var(--bg-tertiary) !important;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        code {
+            color: var(--accent-green);
+            background: var(--bg-tertiary);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-online { background-color: var(--accent-green); }
+        .status-offline { background-color: #666; }
+        .status-busy { background-color: var(--accent-yellow); }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="matrix-bg">
+    <!-- Mobile Menu Toggle -->
+    <div class="md:hidden fixed top-4 left-4 z-50">
+        <button id="mobile-menu-toggle" class="text-2xl text-white">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+        <div class="p-6">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold neon-glow" style="color: var(--accent-blue);">
+                    <i class="fas fa-terminal mr-2"></i>
+                    HackingGPT
+                </h1>
+                <p class="text-sm text-gray-400">Advanced Terminal</p>
+            </div>
+            
+            <!-- User Info -->
+            {% if session.user_id %}
+            <div class="cyber-card p-4 mb-6">
+                <div class="flex items-center">
+                    <div class="status-indicator status-online"></div>
+                    <div>
+                        <p class="font-semibold">{{ session.username }}</p>
+                        <p class="text-sm text-gray-400">
+                            Free
+                        </p>
+                    </div>
+                </div>
+                {% if user %}
+                <div class="mt-2 text-xs">
+                    <div class="flex justify-between">
+                        <span>API Quota:</span>
+                        <span class="{% if user.api_quota < 10 %}text-red-400{% endif %}">
+                            {{ user.api_quota }}
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Navigation -->
+            <nav class="space-y-2">
+                {% if session.user_id %}
+                <a href="{{ url_for('dashboard') }}" class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('chat') }}" class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-comments mr-3"></i>
+                    Chat
+                </a>
+                <a href="{{ url_for('scans') }}" class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-search mr-3"></i>
+                    Vulnerability Scans
+                </a>
+                <a href="{{ url_for('tools') }}" class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-tools mr-3"></i>
+                    Pentesting Tools
+                </a>
+                <a href="{{ url_for('profile') }}" class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-user mr-3"></i>
+                    Profile
+                </a>
+                <a href="{{ url_for('settings') }}" class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-cog mr-3"></i>
+                    Settings
+                </a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-sign-in-alt mr-3"></i>
+                    Login
+                </a>
+                <a href="{{ url_for('register') }}" class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-user-plus mr-3"></i>
+                    Register
+                </a>
+                {% endif %}
+            </nav>
+            
+            {% if session.user_id %}
+            <div class="absolute bottom-6 left-6 right-6">
+                <a href="{{ url_for('logout') }}" class="flex items-center justify-center p-3 rounded bg-red-600 hover:bg-red-700 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Logout
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="p-4">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} mb-4 p-4 rounded border-l-4 
+                                    {% if category == 'error' %}bg-red-900 border-red-500 text-red-100
+                                    {% elif category == 'success' %}bg-green-900 border-green-500 text-green-100
+                                    {% elif category == 'warning' %}bg-yellow-900 border-yellow-500 text-yellow-100
+                                    {% else %}bg-blue-900 border-blue-500 text-blue-100{% endif %}">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-{% if category == 'error' %}exclamation-triangle
+                                              {% elif category == 'success' %}check-circle
+                                              {% elif category == 'warning' %}exclamation-circle
+                                              {% else %}info-circle{% endif %}"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p>{{ message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Page Content -->
+        <main class="p-6">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <!-- JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    
+    <script>
+        // Global JavaScript functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (mobileMenuToggle && sidebar) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                });
+            }
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (sidebar && sidebar.classList.contains('active')) {
+                    if (!sidebar.contains(event.target) && event.target !== mobileMenuToggle) {
+                        sidebar.classList.remove('active');
+                    }
+                }
+            });
+            
+            // Theme toggle functionality
+            function toggleTheme() {
+                const html = document.documentElement;
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            }
+            
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+            
+            // Copy to clipboard functionality
+            window.copyToClipboard = function(text) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showNotification('Copied to clipboard!', 'success');
+                }).catch(function() {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showNotification('Copied to clipboard!', 'success');
+                });
+            };
+            
+            // Show notification
+            window.showNotification = function(message, type = 'info', duration = 3000) {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-lg z-50 ${
+                    type === 'success' ? 'bg-green-600' :
+                    type === 'error' ? 'bg-red-600' :
+                    type === 'warning' ? 'bg-yellow-600' : 'bg-blue-600'
+                } text-white`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, duration);
+            };
+            
+            // Auto-resize textareas
+            const textareas = document.querySelectorAll('textarea[data-auto-resize]');
+            textareas.forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+            });
+        });
+        
+        // WebSocket connection (if available)
+        let socket;
+        if (typeof io !== 'undefined' && {{ 'true' if session.user_id else 'false' }}) {
+            socket = io();
+            
+            socket.on('connect', function() {
+                console.log('Connected to HackingGPT server');
+                showNotification('Connected to server', 'success', 2000);
+            });
+            
+            socket.on('disconnect', function() {
+                console.log('Disconnected from HackingGPT server');
+                showNotification('Disconnected from server', 'warning', 2000);
+            });
+            
+            socket.on('status', function(data) {
+                console.log('Server status:', data.message);
+            });
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

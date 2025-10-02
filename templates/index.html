@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}HackingGPT - Advanced Cybersecurity Assistant{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl w-full">
+        <!-- Hero Section -->
+        <div class="text-center mb-12">
+            <div class="cyber-card p-12 terminal-border">
+                <h1 class="text-6xl font-bold neon-glow mb-6" style="color: var(--accent-blue);">
+                    <i class="fas fa-terminal mr-4"></i>
+                    HACKING<span style="color: var(--accent-pink);">GPT</span>
+                </h1>
+                <h2 class="text-3xl font-bold mb-4" style="color: var(--accent-green);">
+                    ADVANCED TERMINAL
+                </h2>
+                <p class="text-xl text-gray-300 mb-8">
+                    Your AI-powered cybersecurity assistant for penetration testing and bug bounty hunting
+                </p>
+                
+                <!-- ASCII Art Banner -->
+                <div class="bg-black p-6 rounded-lg font-mono text-sm text-green-400 mb-8 overflow-x-auto">
+                    <pre>
+╔════════════════════════════════════════════════════════╗
+║ ██╗  ██║ █████╗  ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗  ║
+║ ██║  ██║██╔══██╗██╔════╝██║ ██╔╝██║████╗  ██║██╔════╝  ║
+║ ███████║███████║██║     █████╔╝ ██║██╔██╗ ██║██║  ███╗ ║
+║ ██╔══██║██╔══██║██║     ██╔═██╗ ██║██║╚██╗██║██║   ██║ ║
+║ ██║  ██║██║  ██║╚██████╗██║  ██╗██║██║ ╚████║╚██████╔╝ ║
+║ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝  ║
+║                ██████╗ ██████╗ ████████╗               ║
+║               ██╔════╝ ██╔══██╗╚══██╔══╝               ║
+║               ██║  ███╗██████╔╝   ██║                  ║
+║               ██║   ██║██╔═══╝    ██║                  ║
+║               ╚██████╔╝██║        ██║                  ║
+║                ╚═════╝ ╚═╝        ╚═╝                  ║
+╚════════════════════════════════════════════════════════╝
+                    </pre>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
+                    {% if not session.user_id %}
+                    <a href="{{ url_for('login') }}" class="btn-cyber px-8 py-3 rounded-lg inline-flex items-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Access Terminal
+                    </a>
+                    <a href="{{ url_for('register') }}" class="bg-gray-700 hover:bg-gray-600 px-8 py-3 rounded-lg inline-flex items-center transition-colors">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        CreateAccount
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('dashboard') }}" class="btn-cyber px-8 py-3 rounded-lg inline-flex items-center">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        Enter Dashboard
+                    </a>
+                    <a href="{{ url_for('chat') }}" class="bg-gray-700 hover:bg-gray-600 px-8 py-3 rounded-lg inline-flex items-center transition-colors">
+                        <i class="fas fa-comments mr-2"></i>
+                        Start Chat
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <div class="cyber-card p-6">
+                <div class="text-center">
+                    <i class="fas fa-robot text-4xl mb-4" style="color: var(--accent-blue);"></i>
+                    <h3 class="text-xl font-bold mb-2">AI-Powered Analysis</h3>
+                    <p class="text-gray-400">Advanced GPT models specialized in cybersecurity and penetration testing</p>
+                </div>
+            </div>
+            
+            <div class="cyber-card p-6">
+                <div class="text-center">
+                    <i class="fas fa-terminal text-4xl mb-4" style="color: var(--accent-green);"></i>
+                    <h3 class="text-xl font-bold mb-2">Command Execution</h3>
+                    <p class="text-gray-400">Safe execution of security tools with real-time output and monitoring</p>
+                </div>
+            </div>
+            
+            <div class="cyber-card p-6">
+                <div class="text-center">
+                    <i class="fas fa-shield-alt text-4xl mb-4" style="color: var(--accent-pink);"></i>
+                    <h3 class="text-xl font-bold mb-2">Vulnerability Scanning</h3>
+                    <p class="text-gray-400">Automated vulnerability assessment with detailed reporting</p>
+                </div>
+            </div>
+            
+            <div class="cyber-card p-6">
+                <div class="text-center">
+                    <i class="fas fa-search text-4xl mb-4" style="color: var(--accent-yellow);"></i>
+                    <h3 class="text-xl font-bold mb-2">Intelligence Gathering</h3>
+                    <p class="text-gray-400">OSINT tools and techniques for comprehensive target analysis</p>
+                </div>
+            </div>
+            
+            <div class="cyber-card p-6">
+                <div class="text-center">
+                    <i class="fas fa-bug text-4xl mb-4" style="color: var(--accent-blue);"></i>
+                    <h3 class="text-xl font-bold mb-2">Exploit Development</h3>
+                    <p class="text-gray-400">Assistance with exploit development and payload creation</p>
+                </div>
+            </div>
+            
+            <div class="cyber-card p-6">
+                <div class="text-center">
+                    <i class="fas fa-chart-line text-4xl mb-4" style="color: var(--accent-green);"></i>
+                    <h3 class="text-xl font-bold mb-2">Progress Tracking</h3>
+                    <p class="text-gray-400">Track your penetration testing progress and findings</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Supported Tools -->
+        <div class="cyber-card p-8 mb-12">
+            <h2 class="text-2xl font-bold text-center mb-8">Supported Security Tools</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
+                <div class="p-4 bg-gray-800 rounded">
+                    <i class="fas fa-network-wired text-2xl mb-2" style="color: var(--accent-blue);"></i>
+                    <p class="text-sm">Nmap</p>
+                </div>
+                <div class="p-4 bg-gray-800 rounded">
+                    <i class="fas fa-globe text-2xl mb-2" style="color: var(--accent-green);"></i>
+                    <p class="text-sm">Nikto</p>
+                </div>
+                <div class="p-4 bg-gray-800 rounded">
+                    <i class="fas fa-database text-2xl mb-2" style="color: var(--accent-pink);"></i>
+                    <p class="text-sm">SQLMap</p>
+                </div>
+                <div class="p-4 bg-gray-800 rounded">
+                    <i class="fas fa-folder-open text-2xl mb-2" style="color: var(--accent-yellow);"></i>
+                    <p class="text-sm">Dirb</p>
+                </div>
+                <div class="p-4 bg-gray-800 rounded">
+                    <i class="fas fa-crosshairs text-2xl mb-2" style="color: var(--accent-blue);"></i>
+                    <p class="text-sm">Metasploit</p>
+                </div>
+                <div class="p-4 bg-gray-800 rounded">
+                    <i class="fas fa-search text-2xl mb-2" style="color: var(--accent-green);"></i>
+                    <p class="text-sm">Gobuster</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Demo Section -->
+        <div class="cyber-card p-8">
+            <h2 class="text-2xl font-bold text-center mb-8">See HackingGPT in Action</h2>
+            <div class="bg-black rounded-lg p-6 font-mono text-sm">
+                <div class="text-green-400 mb-2">┌──(netrunner㉿hackinggpt)-[~]</div>
+                <div class="text-green-400 mb-4">└─▶ What vulnerabilities should I look for in a web application?</div>
+                
+                <div class="text-blue-300 mb-4">🤖 HackingGPT: Here are the top web application vulnerabilities to test for:</div>
+                
+                <div class="text-white space-y-2">
+                    <div>1. <span class="text-red-400">SQL Injection</span> - Test with SQLMap:</div>
+                    <div class="bg-gray-800 p-2 rounded ml-4">
+                        <code class="text-yellow-300">sqlmap -u "http://target.com/page.php?id=1" --dbs</code>
+                    </div>
+                    
+                    <div>2. <span class="text-red-400">Cross-Site Scripting (XSS)</span> - Manual testing and tools</div>
+                    <div>3. <span class="text-red-400">Directory Traversal</span> - Use Dirb for discovery:</div>
+                    <div class="bg-gray-800 p-2 rounded ml-4">
+                        <code class="text-yellow-300">dirb http://target.com/ /usr/share/wordlists/dirb/common.txt</code>
+                    </div>
+                </div>
+                
+                <div class="text-green-400 mt-4 mb-2">┌──(netrunner㉿hackinggpt)-[~]</div>
+                <div class="text-green-400">└─▶ <span class="animate-pulse">|</span></div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center mt-12 text-gray-400">
+            <p class="mb-2">Developed by Douglas Rodrigues Aguiar de Oliveira</p>
+            <p class="text-sm">For authorized security testing purposes only</p>
+        </div>
+    </div>
+</div>
+
+<!-- Matrix Rain Animation -->
+<canvas id="matrix-canvas" class="fixed top-0 left-0 w-full h-full pointer-events-none opacity-10 z-0"></canvas>
+
+<script>
+// Matrix rain animation
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+const matrixArray = matrix.split("");
+
+const fontSize = 10;
+const columns = canvas.width / fontSize;
+
+const drops = [];
+for (let x = 0; x < columns; x++) {
+    drops[x] = 1;
+}
+
+function draw() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#00ff88';
+    ctx.font = fontSize + 'px monospace';
+    
+    for (let i = 0; i < drops.length; i++) {
+        const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+setInterval(draw, 35);
+
+// Resize canvas on window resize
+window.addEventListener('resize', function() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+</script>
+{% endblock %}

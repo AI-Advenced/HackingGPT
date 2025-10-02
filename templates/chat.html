@@ -1,0 +1,724 @@
+{% extends "base.html" %}
+
+{% block title %}Chat - HackingGPT{% endblock %}
+
+{% block head %}
+<style>
+    .chat-container {
+        height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background: var(--bg-secondary);
+    }
+    
+    .chat-input-area {
+        border-top: 1px solid var(--border-color);
+        padding: 1rem;
+        background: var(--bg-primary);
+    }
+    
+    .message-content pre {
+        background: var(--bg-tertiary) !important;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1rem;
+        overflow-x: auto;
+        position: relative;
+    }
+    
+    .copy-button {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    
+    .message-content pre:hover .copy-button {
+        opacity: 1;
+    }
+    
+    .command-button {
+        background: linear-gradient(45deg, var(--accent-green), #20b2aa);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        margin: 0.25rem;
+        transition: all 0.2s;
+    }
+    
+    .command-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 255, 136, 0.3);
+    }
+    
+    .risk-high {
+        border-left: 4px solid #ff4444;
+        background: rgba(255, 68, 68, 0.1);
+    }
+    
+    .risk-medium {
+        border-left: 4px solid #ffaa00;
+        background: rgba(255, 170, 0, 0.1);
+    }
+    
+    .risk-low {
+        border-left: 4px solid #44ff44;
+        background: rgba(68, 255, 68, 0.1);
+    }
+    
+    .conversation-item {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .conversation-item:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--accent-blue);
+    }
+    
+    .conversation-item.active {
+        background: var(--bg-tertiary);
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 1px var(--accent-blue);
+    }
+    
+    .typing-indicator {
+        display: none;
+    }
+    
+    .typing-indicator.show {
+        display: flex;
+        align-items: center;
+        color: var(--accent-blue);
+        margin: 1rem 0;
+    }
+    
+    .typing-dots span {
+        height: 8px;
+        width: 8px;
+        background: var(--accent-blue);
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 2px;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes typing {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex h-screen">
+    <!-- Conversations Sidebar -->
+    <div class="w-80 bg-gray-900 border-r border-gray-700 flex flex-col">
+        <!-- Header -->
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold">
+                    <i class="fas fa-comments mr-2" style="color: var(--accent-blue);"></i>
+                    Conversations
+                </h2>
+                <button id="new-chat-btn" class="btn-cyber px-3 py-1 rounded text-sm">
+                    <i class="fas fa-plus mr-1"></i>
+                    New
+                </button>
+            </div>
+            
+            <!-- Model Selector -->
+            <div class="mt-3">
+                <select id="model-select" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm">
+                    {% for model_id, model_info in models.items() %}
+                    <option value="{{ model_id }}" {% if model_id == (user.preferences.model if user else 'gpt-4o') %}selected{% endif %}>
+                        {{ model_info.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <!-- Conversations List -->
+        <div class="flex-1 overflow-y-auto p-4">
+            <div id="conversations-list">
+                {% for conv in conversations %}
+                <div class="conversation-item {% if current_conversation == conv.id %}active{% endif %}" 
+                     data-id="{{ conv.id }}" 
+                     onclick="loadConversation({{ conv.id }})">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-medium truncate">{{ conv.title }}</h3>
+                            <div class="flex items-center mt-1 text-xs text-gray-400">
+                                <span class="bg-gray-700 px-2 py-0.5 rounded">{{ conv.model }}</span>
+                                <span class="ml-2">{{ conv.updated_at[:10] if conv.updated_at else '' }}</span>
+                            </div>
+                        </div>
+                        <button onclick="deleteConversation({{ conv.id }}, event)" 
+                                class="text-gray-500 hover:text-red-400 ml-2">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col">
+        <!-- Chat Header -->
+        <div class="bg-gray-900 border-b border-gray-700 p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold neon-glow" style="color: var(--accent-blue);">
+                        <i class="fas fa-terminal mr-2"></i>
+                        HackingGPT Terminal
+                    </h1>
+                    <p class="text-sm text-gray-400">
+                        Model: <span id="current-model">{{ models[user.preferences.model if user else 'gpt-4o'].name if user else 'GPT-4 Omni' }}</span>
+                        {% if user %}| Quota: <span class="{% if user.api_quota < 10 %}text-red-400{% endif %}">{{ user.api_quota }}</span>{% endif %}
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="clear-chat-btn" class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm">
+                        <i class="fas fa-eraser mr-1"></i>
+                        Clear
+                    </button>
+                    <button id="export-chat-btn" class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm">
+                        <i class="fas fa-download mr-1"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Messages Area -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 bg-gray-800">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="chat-message {{ message.role }} mb-6">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            {% if message.role == 'user' %}
+                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            {% elif message.role == 'assistant' %}
+                            <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-white text-sm"></i>
+                            </div>
+                            {% else %}
+                            <div class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-terminal text-white text-sm"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span class="font-semibold">
+                                    {% if message.role == 'user' %}{{ user.username if user else 'You' }}
+                                    {% elif message.role == 'assistant' %}HackingGPT
+                                    {% else %}System{% endif %}
+                                </span>
+                                <span class="text-xs text-gray-500">{{ message.timestamp }}</span>
+                            </div>
+                            
+                            <div class="message-content prose prose-invert max-w-none">
+                                {% if message.type == 'command_execution' %}
+                                <div class="command-output p-4 rounded-lg">
+                                    <div class="text-sm text-gray-300 mb-2">
+                                        <i class="fas fa-terminal mr-2"></i>
+                                        Command executed: <code>{{ message.execution_results.command if message.execution_results else '' }}</code>
+                                    </div>
+                                    <pre class="text-sm"><code>{{ message.execution_results.output if message.execution_results else message.content }}</code></pre>
+                                </div>
+                                {% else %}
+                                <div id="message-{{ loop.index }}" class="markdown-content">{{ message.content }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center py-12">
+                <div class="cyber-card p-8 max-w-2xl mx-auto">
+                    <i class="fas fa-terminal text-6xl mb-4" style="color: var(--accent-blue);"></i>
+                    <h2 class="text-2xl font-bold mb-4">Welcome to HackingGPT</h2>
+                    <p class="text-gray-400 mb-6">
+                        Start your cybersecurity conversation. Ask about penetration testing, vulnerability assessment, 
+                        or any security-related topics.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <button onclick="insertPrompt('Help me perform a network reconnaissance on a target')" 
+                                class="p-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left">
+                            <i class="fas fa-network-wired mr-2 text-blue-400"></i>
+                            Network Reconnaissance
+                        </button>
+                        <button onclick="insertPrompt('What vulnerabilities should I test for in a web application?')" 
+                                class="p-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left">
+                            <i class="fas fa-globe mr-2 text-green-400"></i>
+                            Web App Testing
+                        </button>
+                        <button onclick="insertPrompt('Show me how to use nmap for service enumeration')" 
+                                class="p-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left">
+                            <i class="fas fa-search mr-2 text-pink-400"></i>
+                            Tool Usage
+                        </button>
+                        <button onclick="insertPrompt('Help me analyze this exploit code')" 
+                                class="p-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left">
+                            <i class="fas fa-bug mr-2 text-yellow-400"></i>
+                            Code Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Typing Indicator -->
+            <div id="typing-indicator" class="typing-indicator">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-semibold mb-1">HackingGPT</div>
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Command Suggestions -->
+        <div id="command-suggestions" class="hidden p-4 bg-gray-900 border-t border-gray-700">
+            <div class="mb-2 text-sm text-gray-400">
+                <i class="fas fa-lightbulb mr-1"></i>
+                Suggested Commands:
+            </div>
+            <div id="command-buttons" class="flex flex-wrap"></div>
+        </div>
+        
+        <!-- Input Area -->
+        <div class="bg-gray-900 border-t border-gray-700 p-4">
+            <form id="chat-form" class="flex items-end space-x-3">
+                <div class="flex-1">
+                    <textarea id="message-input" 
+                              placeholder="Ask about penetration testing, security tools, or enter commands..."
+                              class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                              rows="1"
+                              data-auto-resize></textarea>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button type="button" 
+                            id="attach-btn"
+                            class="bg-gray-700 hover:bg-gray-600 px-3 py-3 rounded-lg transition-colors">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    
+                    <button type="submit" 
+                            id="send-btn"
+                            class="btn-cyber px-6 py-3 rounded-lg transition-all">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+            
+            <!-- File Input -->
+            <input type="file" id="file-input" class="hidden" accept=".txt,.py,.js,.php,.sh,.sql">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentConversationId = {{ current_conversation or 'null' }};
+let isLoading = false;
+
+// Initialize marked for markdown rendering
+if (typeof marked !== 'undefined') {
+    marked.setOptions({
+        highlight: function(code, lang) {
+            if (typeof Prism !== 'undefined' && Prism.languages[lang]) {
+                return Prism.highlight(code, Prism.languages[lang], lang);
+            }
+            return code;
+        },
+        breaks: true
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const chatMessages = document.getElementById('chat-messages');
+    const sendBtn = document.getElementById('send-btn');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const modelSelect = document.getElementById('model-select');
+    const currentModelSpan = document.getElementById('current-model');
+    
+    // Auto-resize textarea
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    
+    // Handle form submission
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (isLoading) return;
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // Add user message to chat
+        addMessageToChat('user', message);
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        
+        // Show typing indicator
+        showTypingIndicator();
+        
+        // Send message
+        isLoading = true;
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: message,
+                    model: modelSelect.value,
+                    conversation_id: currentConversationId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update conversation ID if new
+                if (!currentConversationId) {
+                    currentConversationId = data.conversation_id;
+                    updateURL();
+                }
+                
+                // Add AI response
+                addMessageToChat('assistant', data.response);
+                
+                // Show command suggestions if any
+                if (data.commands && data.commands.length > 0) {
+                    showCommandSuggestions(data.commands);
+                }
+                
+                // Update conversations list
+                await updateConversationsList();
+                
+            } else {
+                addMessageToChat('system', 'Error: ' + data.error);
+            }
+            
+        } catch (error) {
+            addMessageToChat('system', 'Error: Failed to send message');
+            console.error('Chat error:', error);
+        } finally {
+            hideTypingIndicator();
+            isLoading = false;
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            messageInput.focus();
+        }
+    });
+    
+    // Model change
+    modelSelect.addEventListener('change', function() {
+        currentModelSpan.textContent = this.options[this.selectedIndex].text;
+    });
+    
+    // New chat button
+    document.getElementById('new-chat-btn').addEventListener('click', function() {
+        window.location.href = '/chat';
+    });
+    
+    // Clear chat button
+    document.getElementById('clear-chat-btn').addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear this conversation?')) {
+            chatMessages.innerHTML = getWelcomeMessage();
+            hideCommandSuggestions();
+        }
+    });
+    
+    // File attachment
+    document.getElementById('attach-btn').addEventListener('click', function() {
+        document.getElementById('file-input').click();
+    });
+    
+    document.getElementById('file-input').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            // Handle file upload
+            handleFileUpload(file);
+        }
+    });
+    
+    // Render existing markdown messages
+    renderMarkdownMessages();
+    
+    // Scroll to bottom
+    scrollToBottom();
+    
+    // Focus input
+    messageInput.focus();
+});
+
+function addMessageToChat(role, content) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role} mb-6`;
+    
+    const timestamp = new Date().toLocaleTimeString();
+    let avatar, name;
+    
+    if (role === 'user') {
+        avatar = '<div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center"><i class="fas fa-user text-white text-sm"></i></div>';
+        name = '{{ user.username if user else "You" }}';
+    } else if (role === 'assistant') {
+        avatar = '<div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center"><i class="fas fa-robot text-white text-sm"></i></div>';
+        name = 'HackingGPT';
+    } else {
+        avatar = '<div class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center"><i class="fas fa-terminal text-white text-sm"></i></div>';
+        name = 'System';
+    }
+    
+    messageDiv.innerHTML = `
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">${avatar}</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-2 mb-1">
+                    <span class="font-semibold">${name}</span>
+                    <span class="text-xs text-gray-500">${timestamp}</span>
+                </div>
+                <div class="message-content prose prose-invert max-w-none">
+                    <div class="markdown-content">${content}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    
+    // Render markdown if it's an AI response
+    if (role === 'assistant' && typeof marked !== 'undefined') {
+        const markdownContent = messageDiv.querySelector('.markdown-content');
+        markdownContent.innerHTML = marked.parse(content);
+        addCopyButtons(markdownContent);
+    }
+    
+    scrollToBottom();
+}
+
+function showTypingIndicator() {
+    document.getElementById('typing-indicator').classList.add('show');
+    scrollToBottom();
+}
+
+function hideTypingIndicator() {
+    document.getElementById('typing-indicator').classList.remove('show');
+}
+
+function showCommandSuggestions(commands) {
+    const suggestionsDiv = document.getElementById('command-suggestions');
+    const buttonsDiv = document.getElementById('command-buttons');
+    
+    buttonsDiv.innerHTML = '';
+    
+    commands.forEach(cmd => {
+        const button = document.createElement('button');
+        button.className = `command-button risk-${cmd.risk_level}`;
+        button.innerHTML = `
+            <i class="fas fa-terminal mr-1"></i>
+            ${cmd.command}
+            <span class="ml-2 text-xs opacity-75">${cmd.risk_level.toUpperCase()}</span>
+        `;
+        button.onclick = () => executeCommand(cmd.command);
+        buttonsDiv.appendChild(button);
+    });
+    
+    suggestionsDiv.classList.remove('hidden');
+}
+
+function hideCommandSuggestions() {
+    document.getElementById('command-suggestions').classList.add('hidden');
+}
+
+async function executeCommand(command) {
+    if (!confirm(`Execute command: ${command}\n\nAre you sure?`)) {
+        return;
+    }
+    
+    // Add command to chat
+    addMessageToChat('system', `Executing: ${command}`);
+    
+    try {
+        const response = await fetch('/api/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                command: command,
+                conversation_id: currentConversationId
+            })
+        });
+        
+        const result = await response.json();
+        
+        // Add execution result
+        const resultMessage = `Command: ${command}\nExit Code: ${result.exit_code}\nExecution Time: ${result.execution_time}s\n\nOutput:\n${result.output}`;
+        addMessageToChat('system', resultMessage);
+        
+    } catch (error) {
+        addMessageToChat('system', `Error executing command: ${error.message}`);
+    }
+}
+
+function loadConversation(conversationId) {
+    window.location.href = `/chat/${conversationId}`;
+}
+
+async function deleteConversation(conversationId, event) {
+    event.stopPropagation();
+    
+    if (!confirm('Delete this conversation?')) {
+        return;
+    }
+    
+    try {
+        // Implementation would go here
+        showNotification('Conversation deleted', 'success');
+        location.reload();
+    } catch (error) {
+        showNotification('Failed to delete conversation', 'error');
+    }
+}
+
+async function updateConversationsList() {
+    // Implementation would refresh the conversations list
+}
+
+function renderMarkdownMessages() {
+    if (typeof marked === 'undefined') return;
+    
+    const markdownContents = document.querySelectorAll('.markdown-content');
+    markdownContents.forEach(content => {
+        const text = content.textContent;
+        content.innerHTML = marked.parse(text);
+        addCopyButtons(content);
+    });
+}
+
+function addCopyButtons(container) {
+    const codeBlocks = container.querySelectorAll('pre');
+    codeBlocks.forEach(pre => {
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+        button.innerHTML = '<i class="fas fa-copy"></i>';
+        button.onclick = () => {
+            const code = pre.querySelector('code');
+            copyToClipboard(code ? code.textContent : pre.textContent);
+        };
+        pre.style.position = 'relative';
+        pre.appendChild(button);
+    });
+}
+
+function scrollToBottom() {
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function insertPrompt(text) {
+    const messageInput = document.getElementById('message-input');
+    messageInput.value = text;
+    messageInput.focus();
+}
+
+function updateURL() {
+    if (currentConversationId) {
+        history.pushState(null, null, `/chat/${currentConversationId}`);
+    }
+}
+
+function getWelcomeMessage() {
+    return `
+        <div class="text-center py-12">
+            <div class="cyber-card p-8 max-w-2xl mx-auto">
+                <i class="fas fa-terminal text-6xl mb-4" style="color: var(--accent-blue);"></i>
+                <h2 class="text-2xl font-bold mb-4">Welcome to HackingGPT</h2>
+                <p class="text-gray-400 mb-6">
+                    Start your cybersecurity conversation. Ask about penetration testing, vulnerability assessment, 
+                    or any security-related topics.
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+function handleFileUpload(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        const prompt = `Please analyze this file (${file.name}):\n\n\`\`\`\n${content}\n\`\`\``;
+        document.getElementById('message-input').value = prompt;
+    };
+    reader.readAsText(file);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+Enter to send message
+    if (e.ctrlKey && e.key === 'Enter') {
+        document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+    }
+    
+    // Escape to clear input
+    if (e.key === 'Escape') {
+        document.getElementById('message-input').value = '';
+    }
+});
+</script>
+{% endblock %}

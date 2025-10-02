@@ -1,0 +1,614 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Internal Server Error - HackingGPT{% endblock %}
+
+{% block head %}
+<style>
+    .error-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .server-error {
+        background: linear-gradient(135deg, #1f2937, #374151);
+        border: 2px solid #ef4444;
+        border-radius: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .server-error::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #ef4444, #f59e0b, #ef4444);
+        animation: pulse-red 2s infinite;
+    }
+    
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .error-code-500 {
+        font-size: 10rem;
+        font-weight: 900;
+        line-height: 1;
+        background: linear-gradient(45deg, #ef4444, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        margin-bottom: 1rem;
+        animation: shake 3s infinite;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+        20%, 40%, 60%, 80% { transform: translateX(2px); }
+    }
+    
+    .system-failure {
+        background: #000000;
+        border: 2px solid #ef4444;
+        border-radius: 8px;
+        padding: 2rem;
+        font-family: 'Courier New', monospace;
+        color: #ef4444;
+        margin: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .system-failure::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 98px,
+            rgba(239, 68, 68, 0.1) 100px
+        );
+        animation: scan-lines 3s infinite linear;
+    }
+    
+    @keyframes scan-lines {
+        0% { transform: translateX(-100px); }
+        100% { transform: translateX(100px); }
+    }
+    
+    .critical-error {
+        color: #ef4444;
+        animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+    }
+    
+    .stack-trace {
+        background: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 6px;
+        padding: 1.5rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        color: #9ca3af;
+        margin: 1.5rem 0;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .stack-trace .error-line {
+        color: #ef4444;
+        font-weight: bold;
+    }
+    
+    .stack-trace .file-path {
+        color: #60a5fa;
+    }
+    
+    .stack-trace .line-number {
+        color: #fbbf24;
+    }
+    
+    .diagnostic-panel {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        margin: 2rem 0;
+    }
+    
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin: 0.25rem;
+    }
+    
+    .status-error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid #ef4444;
+    }
+    
+    .status-warning {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+        border: 1px solid #f59e0b;
+    }
+    
+    .status-ok {
+        background: rgba(34, 197, 94, 0.2);
+        color: #4ade80;
+        border: 1px solid #22c55e;
+    }
+    
+    .restart-animation {
+        animation: restart 4s infinite;
+    }
+    
+    @keyframes restart {
+        0% { transform: rotate(0deg); }
+        25% { transform: rotate(90deg); }
+        50% { transform: rotate(180deg); }
+        75% { transform: rotate(270deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .system-logs {
+        background: #000000;
+        border: 1px solid #374151;
+        border-radius: 6px;
+        padding: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.8rem;
+        color: #22c55e;
+        height: 200px;
+        overflow-y: auto;
+        margin: 1rem 0;
+    }
+    
+    .log-entry {
+        margin-bottom: 0.25rem;
+        opacity: 0;
+        animation: log-appear 0.5s forwards;
+    }
+    
+    .log-entry:nth-child(1) { animation-delay: 0.1s; }
+    .log-entry:nth-child(2) { animation-delay: 0.3s; }
+    .log-entry:nth-child(3) { animation-delay: 0.5s; }
+    .log-entry:nth-child(4) { animation-delay: 0.7s; }
+    .log-entry:nth-child(5) { animation-delay: 0.9s; }
+    
+    @keyframes log-appear {
+        to { opacity: 1; }
+    }
+    
+    .emergency-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .action-btn {
+        background: var(--bg-secondary);
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+    
+    .action-btn:hover {
+        border-color: var(--accent-blue);
+        background: var(--bg-tertiary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.2);
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+    
+    .action-btn.emergency {
+        border-color: #ef4444;
+    }
+    
+    .action-btn.emergency:hover {
+        border-color: #f87171;
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="text-center max-w-5xl mx-auto px-6">
+        <div class="server-error p-12">
+            <!-- Error Code -->
+            <div class="error-code-500">500</div>
+            
+            <!-- Main Error Message -->
+            <h1 class="text-4xl font-bold mb-4">
+                <span class="critical-error">SYSTEM FAILURE</span>
+            </h1>
+            
+            <p class="text-xl text-gray-300 mb-8">
+                Internal server error detected • Terminal compromised
+            </p>
+            
+            <!-- System Status Terminal -->
+            <div class="system-failure">
+                <div class="mb-4">
+                    <span class="text-red-400">[CRITICAL]</span> 
+                    <span class="text-yellow-400">INTERNAL_SERVER_ERROR</span> - 
+                    <span class="text-blue-400">CODE_500</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-green-400">┌──(system㉿hackinggpt)-[~/error/500]</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-green-400">└─▶</span> 
+                    <span class="text-white">systemctl status hackinggpt</span>
+                </div>
+                
+                <div class="mb-4 text-red-400">
+                    ● hackinggpt.service - HackingGPT Terminal
+                    <br>&nbsp;&nbsp;&nbsp;Loaded: loaded (/etc/systemd/system/hackinggpt.service; enabled)
+                    <br>&nbsp;&nbsp;&nbsp;Active: <span class="critical-error">failed (Result: exit-code)</span>
+                    <br>&nbsp;&nbsp;&nbsp;Process: 1337 ExecStart=/usr/bin/python3 app.py (code=exited, status=1/FAILURE)
+                </div>
+                
+                <div class="text-yellow-400">
+                    <span class="animate-pulse">█</span> Attempting automatic recovery...
+                </div>
+            </div>
+            
+            <!-- Diagnostic Panel -->
+            <div class="diagnostic-panel">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-stethoscope mr-2 text-red-400"></i>
+                    System Diagnostics
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold mb-3">Component Status</h3>
+                        <div class="space-y-2">
+                            <div class="status-indicator status-error">
+                                <i class="fas fa-times mr-2"></i>
+                                Application Server
+                            </div>
+                            <div class="status-indicator status-warning">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Database Connection
+                            </div>
+                            <div class="status-indicator status-ok">
+                                <i class="fas fa-check mr-2"></i>
+                                Load Balancer
+                            </div>
+                            <div class="status-indicator status-ok">
+                                <i class="fas fa-check mr-2"></i>
+                                Error Handler
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold mb-3">Error Details</h3>
+                        <div class="text-sm text-gray-300 space-y-1">
+                            <div><strong>Time:</strong> {{ moment().format('YYYY-MM-DD HH:mm:ss') if moment else 'Unknown' }}</div>
+                            <div><strong>Request ID:</strong> {{ request.headers.get('X-Request-ID', 'N/A') }}</div>
+                            <div><strong>User Agent:</strong> {{ request.headers.get('User-Agent', 'Unknown')[:50] }}...</div>
+                            <div><strong>Path:</strong> <code>{{ request.path }}</code></div>
+                            <div><strong>Method:</strong> <code>{{ request.method }}</code></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Logs -->
+            <div class="text-left">
+                <h3 class="text-lg font-semibold mb-3">
+                    <i class="fas fa-file-alt mr-2 text-green-400"></i>
+                    Recent System Logs
+                </h3>
+                
+                <div class="system-logs">
+                    <div class="log-entry">
+                        <span class="text-gray-400">[2024-12-15 14:30:45]</span> 
+                        <span class="text-blue-400">[INFO]</span> 
+                        <span class="text-white">HackingGPT service starting...</span>
+                    </div>
+                    <div class="log-entry">
+                        <span class="text-gray-400">[2024-12-15 14:30:46]</span> 
+                        <span class="text-green-400">[SUCCESS]</span> 
+                        <span class="text-white">Database connection established</span>
+                    </div>
+                    <div class="log-entry">
+                        <span class="text-gray-400">[2024-12-15 14:30:47]</span> 
+                        <span class="text-green-400">[SUCCESS]</span> 
+                        <span class="text-white">AI models initialized</span>
+                    </div>
+                    <div class="log-entry">
+                        <span class="text-gray-400">[2024-12-15 14:30:48]</span> 
+                        <span class="text-yellow-400">[WARNING]</span> 
+                        <span class="text-white">High memory usage detected</span>
+                    </div>
+                    <div class="log-entry">
+                        <span class="text-gray-400">[2024-12-15 14:30:52]</span> 
+                        <span class="text-red-400">[ERROR]</span> 
+                        <span class="text-white">Unhandled exception in request handler</span>
+                    </div>
+                    <div class="log-entry">
+                        <span class="text-gray-400">[2024-12-15 14:30:52]</span> 
+                        <span class="text-red-400">[CRITICAL]</span> 
+                        <span class="text-white">Service crashed with exit code 1</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stack Trace (if available) -->
+            <div class="text-left">
+                <h3 class="text-lg font-semibold mb-3">
+                    <i class="fas fa-bug mr-2 text-red-400"></i>
+                    Stack Trace
+                </h3>
+                
+                <div class="stack-trace">
+                    <div class="error-line">Traceback (most recent call last):</div>
+                    <div>&nbsp;&nbsp;File "<span class="file-path">/app/hackinggpt/app.py</span>", line <span class="line-number">1337</span>, in handle_request</div>
+                    <div>&nbsp;&nbsp;&nbsp;&nbsp;return process_ai_request(user_input)</div>
+                    <div>&nbsp;&nbsp;File "<span class="file-path">/app/hackinggpt/ai_manager.py</span>", line <span class="line-number">42</span>, in process_ai_request</div>
+                    <div>&nbsp;&nbsp;&nbsp;&nbsp;response = model.generate_response(prompt)</div>
+                    <div>&nbsp;&nbsp;File "<span class="file-path">/app/hackinggpt/models/base.py</span>", line <span class="line-number">128</span>, in generate_response</div>
+                    <div>&nbsp;&nbsp;&nbsp;&nbsp;raise InternalModelError("Model processing failed")</div>
+                    <div class="error-line">InternalModelError: Model processing failed - Token limit exceeded</div>
+                </div>
+            </div>
+            
+            <!-- Emergency Actions -->
+            <div class="emergency-actions">
+                <button onclick="location.reload()" class="action-btn emergency">
+                    <i class="fas fa-redo restart-animation text-2xl mb-2 text-red-400"></i>
+                    <h3 class="font-semibold">Restart Service</h3>
+                    <p class="text-sm text-gray-400 mt-1">Attempt system recovery</p>
+                </button>
+                
+                <a href="/" class="action-btn">
+                    <i class="fas fa-home text-2xl mb-2 text-blue-400"></i>
+                    <h3 class="font-semibold">Return Home</h3>
+                    <p class="text-sm text-gray-400 mt-1">Go to main dashboard</p>
+                </a>
+                
+                {% if session.user_id %}
+                <a href="/profile" class="action-btn">
+                    <i class="fas fa-user text-2xl mb-2 text-green-400"></i>
+                    <h3 class="font-semibold">Check Status</h3>
+                    <p class="text-sm text-gray-400 mt-1">View account status</p>
+                </a>
+                {% else %}
+                <a href="/login" class="action-btn">
+                    <i class="fas fa-sign-in-alt text-2xl mb-2 text-yellow-400"></i>
+                    <h3 class="font-semibold">Login</h3>
+                    <p class="text-sm text-gray-400 mt-1">Access your account</p>
+                </a>
+                {% endif %}
+            </div>
+            
+            <!-- Technical Information -->
+            <div class="diagnostic-panel text-left">
+                <h3 class="text-lg font-semibold mb-4">
+                    <i class="fas fa-info-circle mr-2 text-blue-400"></i>
+                    What Happened?
+                </h3>
+                
+                <div class="space-y-3 text-gray-300">
+                    <p>
+                        <i class="fas fa-server mr-2 text-red-400"></i>
+                        The HackingGPT server encountered an unexpected error while processing your request.
+                    </p>
+                    
+                    <p>
+                        <i class="fas fa-exclamation-triangle mr-2 text-yellow-400"></i>
+                        This could be due to a temporary system overload, database connectivity issues, or an application bug.
+                    </p>
+                    
+                    <p>
+                        <i class="fas fa-tools mr-2 text-green-400"></i>
+                        Our automated systems are working to resolve the issue. If the problem persists, please contact support.
+                    </p>
+                </div>
+                
+                <div class="mt-6 p-4 bg-black rounded border border-yellow-500">
+                    <h4 class="font-semibold text-yellow-400 mb-2">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        Troubleshooting Steps:
+                    </h4>
+                    <ol class="list-decimal list-inside text-sm space-y-1 text-gray-300">
+                        <li>Try refreshing the page (Ctrl+F5)</li>
+                        <li>Clear your browser cache and cookies</li>
+                        <li>Wait a few minutes and try again</li>
+                        <li>Try accessing a different page first</li>
+                        <li>Contact support if the issue persists</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <!-- Support Contact -->
+            <div class="mt-8 text-center">
+                <p class="text-gray-400 mb-4">
+                    If this error persists, please report it to our technical team.
+                </p>
+                
+                <div class="flex justify-center space-x-6 text-sm">
+                    <a href="mailto:support@hackinggpt.com?subject=500 Error Report&body=Request ID: {{ request.headers.get('X-Request-ID', 'N/A') }}%0ATime: {{ moment().format('YYYY-MM-DD HH:mm:ss') if moment else 'Unknown' }}%0APath: {{ request.path }}%0A%0ADescription of what you were doing:" 
+                       class="text-red-400 hover:text-red-300">
+                        <i class="fas fa-envelope mr-1"></i>
+                        Report Error
+                    </a>
+                    <a href="#" class="text-blue-400 hover:text-blue-300">
+                        <i class="fas fa-life-ring mr-1"></i>
+                        Get Help
+                    </a>
+                    <a href="#" class="text-green-400 hover:text-green-300">
+                        <i class="fas fa-chart-line mr-1"></i>
+                        Status Page
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh countdown
+    let countdown = 30;
+    const refreshBtn = document.querySelector('.action-btn.emergency');
+    const originalText = refreshBtn.innerHTML;
+    
+    function updateRefreshButton() {
+        if (countdown > 0) {
+            refreshBtn.innerHTML = `
+                <i class="fas fa-redo restart-animation text-2xl mb-2 text-red-400"></i>
+                <h3 class="font-semibold">Auto Refresh (${countdown}s)</h3>
+                <p class="text-sm text-gray-400 mt-1">Automatic system recovery</p>
+            `;
+            countdown--;
+        } else {
+            location.reload();
+        }
+    }
+    
+    // Start countdown after 5 seconds
+    setTimeout(() => {
+        const interval = setInterval(updateRefreshButton, 1000);
+        
+        // Stop countdown if user clicks the button
+        refreshBtn.addEventListener('click', () => {
+            clearInterval(interval);
+        });
+    }, 5000);
+    
+    // Add system logs dynamically
+    function addSystemLog(message, level = 'INFO') {
+        const logsContainer = document.querySelector('.system-logs');
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        
+        const timestamp = new Date().toLocaleString();
+        const colors = {
+            'INFO': 'text-blue-400',
+            'SUCCESS': 'text-green-400',
+            'WARNING': 'text-yellow-400',
+            'ERROR': 'text-red-400',
+            'CRITICAL': 'text-red-400'
+        };
+        
+        logEntry.innerHTML = `
+            <span class="text-gray-400">[${timestamp}]</span> 
+            <span class="${colors[level] || 'text-blue-400'}">[${level}]</span> 
+            <span class="text-white">${message}</span>
+        `;
+        
+        logsContainer.appendChild(logEntry);
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+    
+    // Add recovery attempt logs
+    setTimeout(() => addSystemLog('Starting recovery procedures...', 'INFO'), 2000);
+    setTimeout(() => addSystemLog('Checking database connectivity...', 'INFO'), 4000);
+    setTimeout(() => addSystemLog('Attempting service restart...', 'WARNING'), 6000);
+    setTimeout(() => addSystemLog('Recovery mode activated', 'SUCCESS'), 8000);
+    
+    // Console debugging info
+    console.group('🔥 HackingGPT - Server Error Debug Info');
+    console.error('500 Internal Server Error');
+    console.log('Request Path:', '{{ request.path }}');
+    console.log('Request Method:', '{{ request.method }}');
+    console.log('User Agent:', '{{ request.headers.get("User-Agent", "Unknown") }}');
+    console.log('Timestamp:', new Date().toISOString());
+    console.groupEnd();
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        switch(e.key.toLowerCase()) {
+            case 'r':
+                if (e.ctrlKey || e.altKey) {
+                    e.preventDefault();
+                    location.reload();
+                }
+                break;
+            case 'h':
+                if (e.ctrlKey || e.altKey) {
+                    e.preventDefault();
+                    window.location.href = '/';
+                }
+                break;
+        }
+    });
+    
+    // Add click effects to action buttons
+    document.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+});
+
+// Error reporting function
+function reportError() {
+    const errorData = {
+        path: '{{ request.path }}',
+        method: '{{ request.method }}',
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        url: window.location.href
+    };
+    
+    // This could send error data to an error tracking service
+    console.log('Error Report Data:', errorData);
+    
+    showNotification('Error report sent to technical team', 'success');
+}
+
+// Add to console for debugging
+console.log(`
+╔══════════════════════════════════════════════════════════╗
+║                    500 SERVER ERROR                      ║
+║                                                          ║
+║  Something went wrong on our end. We're working on it!  ║
+║                                                          ║
+║  Shortcuts:                                              ║
+║  • Ctrl+R : Refresh Page                                ║
+║  • Ctrl+H : Go to Home                                  ║
+║                                                          ║
+║              ~ HackingGPT Error Handler ~               ║
+╚══════════════════════════════════════════════════════════╝
+`);
+</script>
+{% endblock %}

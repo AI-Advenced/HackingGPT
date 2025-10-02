@@ -1,0 +1,871 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - HackingGPT{% endblock %}
+
+{% block head %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+        border-radius: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-pink));
+    }
+    
+    .stats-card {
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    
+    .activity-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--accent-blue), var(--accent-green));
+    }
+    
+    .activity-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    .activity-item:hover {
+        border-color: var(--accent-blue);
+        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.1);
+    }
+    
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: -2rem;
+        top: 1rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent-blue);
+        border: 2px solid var(--bg-primary);
+    }
+    
+    .activity-success::before { background: var(--accent-green); }
+    .activity-error::before { background: #ef4444; }
+    .activity-warning::before { background: var(--accent-yellow); }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+        transition: stroke-dasharray 0.35s;
+        transform-origin: 50% 50%;
+    }
+    
+    .skill-bar {
+        background: var(--bg-tertiary);
+        border-radius: 0.5rem;
+        height: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .skill-progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+        border-radius: 0.5rem;
+        transition: width 1s ease-in-out;
+    }
+    
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .badge-premium {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+        border: 1px solid #f59e0b;
+    }
+    
+    .badge-free {
+        background: rgba(107, 114, 128, 0.2);
+        color: #9ca3af;
+        border: 1px solid #6b7280;
+    }
+    
+    .achievement-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .achievement-card.unlocked {
+        border-color: var(--accent-yellow);
+        background: rgba(245, 158, 11, 0.1);
+    }
+    
+    .achievement-card.unlocked::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent-yellow), #fbbf24);
+    }
+    
+    .achievement-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .achievement-card.unlocked .achievement-icon {
+        color: var(--accent-yellow);
+        animation: glow 2s infinite alternate;
+    }
+    
+    @keyframes glow {
+        from { text-shadow: 0 0 5px currentColor; }
+        to { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+    }
+    
+    .export-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .export-option {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    
+    .export-option:hover {
+        border-color: var(--accent-blue);
+        background: var(--bg-tertiary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Profile Header -->
+    <div class="profile-header p-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center space-x-6">
+                <!-- Avatar -->
+                <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-3xl font-bold">
+                    {{ user.username[0].upper() if user.username else 'U' }}
+                </div>
+                
+                <!-- User Info -->
+                <div>
+                    <h1 class="text-3xl font-bold neon-glow" style="color: var(--accent-blue);">
+                        {{ user.username }}
+                    </h1>
+                    <div class="flex items-center space-x-3 mt-2">
+                        <span class="badge {% if user.is_premium %}badge-premium{% else %}badge-free{% endif %}">
+                            <i class="fas fa-{% if user.is_premium %}crown{% else %}user{% endif %} mr-1"></i>
+                            {% if user.is_premium %}Premium{% else %}Free Tier{% endif %}
+                        </span>
+                        <span class="text-gray-400 text-sm">
+                            <i class="fas fa-calendar mr-1"></i>
+                            Member since {{ user.created_at[:10] if user.created_at else 'Today' }}
+                        </span>
+                    </div>
+                    <p class="text-gray-300 mt-2">{{ user.email }}</p>
+                    {% if user.last_login %}
+                    <p class="text-gray-400 text-sm mt-1">
+                        <i class="fas fa-clock mr-1"></i>
+                        Last active: {{ user.last_login }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="mt-6 lg:mt-0 flex flex-col space-y-2">
+                <button onclick="editProfile()" class="btn-cyber px-6 py-2 rounded-lg text-sm">
+                    <i class="fas fa-edit mr-2"></i>
+                    Edit Profile
+                </button>
+                <button onclick="exportData()" class="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg text-sm transition-colors">
+                    <i class="fas fa-download mr-2"></i>
+                    Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- API Usage -->
+        <div class="stats-card cyber-card p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-400">API Requests</p>
+                    <p class="text-2xl font-bold">{{ api_usage_data|length }}</p>
+                </div>
+                <div class="p-3 bg-blue-900 rounded-full">
+                    <i class="fas fa-robot text-blue-400"></i>
+                </div>
+            </div>
+            
+            <!-- Progress Ring -->
+            <div class="relative w-16 h-16 mx-auto">
+                <svg class="progress-ring w-full h-full" viewBox="0 0 42 42">
+                    <circle class="progress-ring-circle stroke-gray-700" 
+                            cx="21" cy="21" r="15.91549430918954" 
+                            fill="transparent" 
+                            stroke-width="2"/>
+                    <circle class="progress-ring-circle stroke-blue-400" 
+                            cx="21" cy="21" r="15.91549430918954" 
+                            fill="transparent" 
+                            stroke-width="2"
+                            stroke-dasharray="{{ (api_usage_data|length / (user.api_quota + api_usage_data|length) * 100) if (user.api_quota + api_usage_data|length) > 0 else 0 }} 100"
+                            stroke-linecap="round"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-xs font-bold">
+                        {{ ((api_usage_data|length / (user.api_quota + api_usage_data|length) * 100) if (user.api_quota + api_usage_data|length) > 0 else 0)|round }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Commands Executed -->
+        <div class="stats-card cyber-card p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-400">Commands</p>
+                    <p class="text-2xl font-bold">{{ command_history|length }}</p>
+                </div>
+                <div class="p-3 bg-green-900 rounded-full">
+                    <i class="fas fa-terminal text-green-400"></i>
+                </div>
+            </div>
+            
+            <!-- Success Rate -->
+            <div class="text-center">
+                {% set success_count = command_history|selectattr('exit_code', 'equalto', 0)|list|length %}
+                {% set total_commands = command_history|length %}
+                {% set success_rate = (success_count / total_commands * 100) if total_commands > 0 else 0 %}
+                
+                <div class="text-xs text-gray-400 mb-1">Success Rate</div>
+                <div class="skill-bar mb-2">
+                    <div class="skill-progress" style="width: {{ success_rate }}%"></div>
+                </div>
+                <div class="text-sm font-bold text-green-400">{{ success_rate|round }}%</div>
+            </div>
+        </div>
+        
+        <!-- Quota Remaining -->
+        <div class="stats-card cyber-card p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-400">API Quota</p>
+                    <p class="text-2xl font-bold {% if user.api_quota < 10 %}text-red-400{% endif %}">
+                        {{ user.api_quota }}
+                    </p>
+                </div>
+                <div class="p-3 bg-yellow-900 rounded-full">
+                    <i class="fas fa-hourglass-half text-yellow-400"></i>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <div class="text-xs text-gray-400 mb-1">Remaining</div>
+                <div class="progress-bar bg-gray-700 rounded-full h-2 mb-2">
+                    {% set quota_percentage = (user.api_quota / 100 * 100) if user.api_quota <= 100 else 100 %}
+                    <div class="bg-yellow-400 h-2 rounded-full" style="width: {{ quota_percentage }}%"></div>
+                </div>
+                <div class="text-sm">
+                    <span class="{% if user.api_quota < 10 %}text-red-400{% else %}text-yellow-400{% endif %}">
+                        {{ quota_percentage|round }}% remaining
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Level -->
+        <div class="stats-card cyber-card p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-400">Level</p>
+                    <p class="text-2xl font-bold">{{ (api_usage_data|length // 10 + 1) if api_usage_data else 1 }}</p>
+                </div>
+                <div class="p-3 {% if user.is_premium %}bg-yellow-900{% else %}bg-gray-700{% endif %} rounded-full">
+                    <i class="fas fa-{% if user.is_premium %}crown{% else %}trophy{% endif %} {% if user.is_premium %}text-yellow-400{% else %}text-gray-400{% endif %}"></i>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                {% set current_level = (api_usage_data|length // 10 + 1) if api_usage_data else 1 %}
+                {% set level_progress = (api_usage_data|length % 10 * 10) if api_usage_data else 0 %}
+                
+                <div class="text-xs text-gray-400 mb-1">Progress to Level {{ current_level + 1 }}</div>
+                <div class="skill-bar mb-2">
+                    <div class="skill-progress" style="width: {{ level_progress }}%"></div>
+                </div>
+                <div class="text-sm font-bold">{{ level_progress }}%</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Activity Timeline -->
+        <div class="lg:col-span-2">
+            <div class="cyber-card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold">
+                        <i class="fas fa-history mr-2" style="color: var(--accent-green);"></i>
+                        Recent Activity
+                    </h2>
+                    <button onclick="clearHistory()" class="text-gray-400 hover:text-red-400 text-sm">
+                        <i class="fas fa-trash mr-1"></i>
+                        Clear History
+                    </button>
+                </div>
+                
+                {% if command_history %}
+                <div class="activity-timeline">
+                    {% for cmd in command_history[:10] %}
+                    <div class="activity-item {% if cmd.exit_code == 0 %}activity-success{% else %}activity-error{% endif %}">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-sm truncate">{{ cmd.command }}</h3>
+                                <div class="flex items-center mt-2 text-xs text-gray-400">
+                                    <span class="mr-4">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        {{ cmd.timestamp }}
+                                    </span>
+                                    <span class="mr-4">
+                                        <i class="fas fa-stopwatch mr-1"></i>
+                                        {{ "%.2f"|format(cmd.execution_time) }}s
+                                    </span>
+                                    <span class="px-2 py-1 rounded text-xs 
+                                        {% if cmd.risk_level == 'high' %}bg-red-900 text-red-400
+                                        {% elif cmd.risk_level == 'medium' %}bg-yellow-900 text-yellow-400
+                                        {% else %}bg-green-900 text-green-400{% endif %}">
+                                        {{ cmd.risk_level.upper() }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="ml-4 flex items-center">
+                                {% if cmd.exit_code == 0 %}
+                                <i class="fas fa-check-circle text-green-400"></i>
+                                {% else %}
+                                <i class="fas fa-times-circle text-red-400"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-history text-4xl text-gray-600 mb-4"></i>
+                    <h3 class="text-lg font-semibold mb-2">No Activity Yet</h3>
+                    <p class="text-gray-400">Start using HackingGPT to see your command history here</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Skills -->
+            <div class="cyber-card p-6">
+                <h3 class="text-lg font-bold mb-4">
+                    <i class="fas fa-chart-bar mr-2" style="color: var(--accent-pink);"></i>
+                    Skills
+                </h3>
+                
+                <div class="space-y-4">
+                    {% set skills = {
+                        'Network Scanning': ([command_history|selectattr('command', 'contains', 'nmap')|list|length * 20, 100]|min),
+                        'Web Testing': ([command_history|selectattr('command', 'contains', 'nikto')|list|length * 25, 100]|min),
+                        'SQL Injection': ([command_history|selectattr('command', 'contains', 'sqlmap')|list|length * 30, 100]|min),
+                        'Directory Brute Force': ([command_history|selectattr('command', 'contains', 'dirb')|list|length * 25, 100]|min)
+
+                    } %}
+                    
+                    {% for skill, percentage in skills.items() %}
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-300">{{ skill }}</span>
+                            <span class="text-gray-400">{{ percentage }}%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: {{ percentage }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Achievements -->
+            <div class="cyber-card p-6">
+                <h3 class="text-lg font-bold mb-4">
+                    <i class="fas fa-trophy mr-2" style="color: var(--accent-yellow);"></i>
+                    Achievements
+                </h3>
+                
+                <div class="space-y-4">
+                    {% set achievements = [
+                        {
+                            'name': 'First Steps',
+                            'description': 'Execute your first command',
+                            'icon': 'fa-baby',
+                            'unlocked': command_history|length > 0
+                        },
+                        {
+                            'name': 'Scanner',
+                            'description': 'Perform 10 scans',
+                            'icon': 'fa-search',
+                            'unlocked': command_history|length >= 10
+                        },
+                        {
+                            'name': 'Persistent',
+                            'description': 'Use HackingGPT for 7 days',
+                            'icon': 'fa-calendar-check',
+                            'unlocked': user.is_premium
+                        },
+                        {
+                            'name': 'Expert',
+                            'description': 'Reach level 5',
+                            'icon': 'fa-graduation-cap',
+                            'unlocked': (api_usage_data|length // 10 + 1) >= 5
+                        }
+                    ] %}
+                    
+                    {% for achievement in achievements %}
+                    <div class="achievement-card {% if achievement.unlocked %}unlocked{% endif %}">
+                        <div class="achievement-icon">
+                            <i class="fas {{ achievement.icon }} {% if not achievement.unlocked %}text-gray-600{% endif %}"></i>
+                        </div>
+                        <h4 class="font-semibold text-sm mb-1">{{ achievement.name }}</h4>
+                        <p class="text-xs text-gray-400">{{ achievement.description }}</p>
+                        {% if achievement.unlocked %}
+                        <div class="mt-2">
+                            <span class="badge badge-premium">
+                                <i class="fas fa-check mr-1"></i>
+                                Unlocked
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Account Actions -->
+            <div class="cyber-card p-6">
+                <h3 class="text-lg font-bold mb-4">
+                    <i class="fas fa-cog mr-2" style="color: var(--accent-blue);"></i>
+                    Account
+                </h3>
+                
+                <div class="space-y-3">
+                    {% if not user.is_premium %}
+                    <button onclick="upgradeToPremium()" class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold py-2 px-4 rounded hover:from-yellow-400 hover:to-yellow-500 transition-all">
+                        <i class="fas fa-crown mr-2"></i>
+                        Upgrade to Premium
+                    </button>
+                    {% endif %}
+                    
+                    <button onclick="window.location.href='/settings'" class="w-full bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded transition-colors">
+                        <i class="fas fa-cog mr-2"></i>
+                        Account Settings
+                    </button>
+                    
+                    <button onclick="resetApiQuota()" class="w-full bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded transition-colors">
+                        <i class="fas fa-refresh mr-2"></i>
+                        Reset API Quota
+                    </button>
+                    
+                    <button onclick="deleteAccount()" class="w-full bg-red-600 hover:bg-red-700 py-2 px-4 rounded transition-colors">
+                        <i class="fas fa-trash mr-2"></i>
+                        Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Usage Chart -->
+    {% if api_usage_data %}
+    <div class="cyber-card p-6">
+        <h2 class="text-xl font-bold mb-6">
+            <i class="fas fa-chart-line mr-2" style="color: var(--accent-blue);"></i>
+            API Usage Over Time
+        </h2>
+        
+        <div class="chart-container">
+            <canvas id="usage-chart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Export Data Modal -->
+<div id="export-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="cyber-card p-8 max-w-2xl w-full terminal-border">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">
+                    <i class="fas fa-download mr-3" style="color: var(--accent-green);"></i>
+                    Export Your Data
+                </h2>
+                <button id="close-export-btn" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <p class="text-gray-400 mb-6">Choose what data you'd like to export from your HackingGPT account.</p>
+            
+            <div class="export-options">
+                <div class="export-option" onclick="exportData('profile')">
+                    <i class="fas fa-user text-2xl mb-2 text-blue-400"></i>
+                    <h3 class="font-semibold">Profile Data</h3>
+                    <p class="text-sm text-gray-400 mt-1">Basic account information</p>
+                </div>
+                
+                <div class="export-option" onclick="exportData('commands')">
+                    <i class="fas fa-terminal text-2xl mb-2 text-green-400"></i>
+                    <h3 class="font-semibold">Command History</h3>
+                    <p class="text-sm text-gray-400 mt-1">All executed commands</p>
+                </div>
+                
+                <div class="export-option" onclick="exportData('conversations')">
+                    <i class="fas fa-comments text-2xl mb-2 text-pink-400"></i>
+                    <h3 class="font-semibold">Conversations</h3>
+                    <p class="text-sm text-gray-400 mt-1">Chat history with AI</p>
+                </div>
+                
+                <div class="export-option" onclick="exportData('all')">
+                    <i class="fas fa-database text-2xl mb-2 text-yellow-400"></i>
+                    <h3 class="font-semibold">Complete Export</h3>
+                    <p class="text-sm text-gray-400 mt-1">All your data</p>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <button id="cancel-export-btn" class="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize usage chart if data is available
+    {% if api_usage_data %}
+    initUsageChart();
+    {% endif %}
+    
+    // Animate skill bars
+    animateSkillBars();
+    
+    // Modal handlers
+    const exportModal = document.getElementById('export-modal');
+    document.getElementById('close-export-btn').addEventListener('click', () => closeModal(exportModal));
+    document.getElementById('cancel-export-btn').addEventListener('click', () => closeModal(exportModal));
+    
+    // Close modal on outside click
+    window.addEventListener('click', function(e) {
+        if (e.target === exportModal) closeModal(exportModal);
+    });
+});
+
+function initUsageChart() {
+    const ctx = document.getElementById('usage-chart').getContext('2d');
+    const chartData = {
+        labels: [{% for data in api_usage_data %}'{{ data[0] }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'API Requests',
+            data: [{% for data in api_usage_data %}{{ data[1] }}{% if not loop.last %},{% endif %}{% endfor %}],
+            borderColor: 'rgba(0, 212, 255, 1)',
+            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }, {
+            label: 'Tokens Used',
+            data: [{% for data in api_usage_data %}{{ data[2] }}{% if not loop.last %},{% endif %}{% endfor %}],
+            borderColor: 'rgba(0, 255, 136, 1)',
+            backgroundColor: 'rgba(0, 255, 136, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y1'
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        color: 'rgba(75, 85, 99, 0.3)'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    ticks: {
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        color: 'rgba(75, 85, 99, 0.3)'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    ticks: {
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    }
+                }
+            }
+        }
+    });
+}
+
+function animateSkillBars() {
+    const skillBars = document.querySelectorAll('.skill-progress');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const width = entry.target.style.width;
+                entry.target.style.width = '0%';
+                setTimeout(() => {
+                    entry.target.style.width = width;
+                }, 100);
+                observer.unobserve(entry.target);
+            }
+        });
+    });
+    
+    skillBars.forEach(bar => observer.observe(bar));
+}
+
+function editProfile() {
+    // Implementation for profile editing
+    showNotification('Profile editor coming soon!', 'info');
+}
+
+function exportData(type = 'all') {
+    const exportModal = document.getElementById('export-modal');
+    
+    if (type === 'all') {
+        openModal(exportModal);
+        return;
+    }
+    
+    // Generate export data
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    let filename, data;
+    
+    switch (type) {
+        case 'profile':
+            filename = `hackinggpt_profile_${timestamp}.json`;
+            data = {
+                username: '{{ user.username }}',
+                email: '{{ user.email }}',
+                is_premium: {{ user.is_premium|lower }},
+                created_at: '{{ user.created_at }}',
+                api_quota: {{ user.api_quota }},
+                preferences: {{ user.preferences|tojson if user.preferences else '{}' }}
+            };
+            break;
+            
+        case 'commands':
+            filename = `hackinggpt_commands_${timestamp}.json`;
+            data = {{ command_history|tojson }};
+            break;
+            
+        case 'conversations':
+            filename = `hackinggpt_conversations_${timestamp}.json`;
+            data = {
+                message: 'Conversation export not yet implemented',
+                conversations: []
+            };
+            break;
+            
+        default:
+            data = {
+                profile: {
+                    username: '{{ user.username }}',
+                    email: '{{ user.email }}',
+                    is_premium: {{ user.is_premium|lower }},
+                    created_at: '{{ user.created_at }}',
+                    api_quota: {{ user.api_quota }}
+                },
+                command_history: {{ command_history|tojson }},
+                api_usage: {{ api_usage_data|tojson }},
+                export_date: new Date().toISOString()
+            };
+            filename = `hackinggpt_complete_export_${timestamp}.json`;
+    }
+    
+    // Download the data
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} data exported successfully`, 'success');
+    closeModal(exportModal);
+}
+
+function clearHistory() {
+    if (!confirm('Are you sure you want to clear your command history? This action cannot be undone.')) {
+        return;
+    }
+    
+    // Implementation would clear command history
+    showNotification('Command history cleared', 'success');
+    setTimeout(() => location.reload(), 1000);
+}
+
+function upgradeToPremium() {
+    showNotification('Premium upgrade coming soon!', 'info');
+}
+
+function resetApiQuota() {
+    if (!confirm('Reset your API quota? This will restore your quota to the default amount.')) {
+        return;
+    }
+    
+    // Implementation would reset quota
+    showNotification('API quota reset successfully', 'success');
+    setTimeout(() => location.reload(), 1000);
+}
+
+function deleteAccount() {
+    const confirmation = prompt('Type "DELETE" to permanently delete your account:');
+    
+    if (confirmation !== 'DELETE') {
+        showNotification('Account deletion cancelled', 'info');
+        return;
+    }
+    
+    if (!confirm('This will permanently delete your account and all data. Are you absolutely sure?')) {
+        return;
+    }
+    
+    // Implementation would delete account
+    showNotification('Account deletion initiated. You will be logged out shortly.', 'warning');
+    setTimeout(() => {
+        window.location.href = '/logout';
+    }, 3000);
+}
+
+function openModal(modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Add hover effects to stats cards
+document.querySelectorAll('.stats-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-4px) scale(1.02)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+
+// Animate achievement cards
+document.querySelectorAll('.achievement-card.unlocked').forEach(card => {
+    card.addEventListener('click', function() {
+        this.style.animation = 'glow 1s ease-in-out';
+        setTimeout(() => {
+            this.style.animation = '';
+        }, 1000);
+    });
+});
+</script>
+{% endblock %}

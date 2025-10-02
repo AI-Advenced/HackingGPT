@@ -1,0 +1,43 @@
+# Core WebView and Flask dependencies
+pywebview==4.4.1
+flask==2.3.3
+flask-socketio==5.3.6
+werkzeug==2.3.7
+
+# Additional Flask extensions
+flask-limiter==3.5.0
+redis==5.0.1
+
+# Security and encryption
+cryptography==41.0.7
+bcrypt==4.0.1
+
+# Data handling
+# requests==2.31.0
+# sqlite3  # Built-in with Python
+
+# Background tasks
+celery==5.3.4
+
+# Markdown processing
+markdown==3.5.1
+bleach==6.1.0
+
+# System integration
+psutil==5.9.6
+pathlib  # Built-in with Python
+
+# Development tools (optional)
+python-dotenv==1.0.0
+
+pyinstaller>=6.10.0
+
+# Windows-specific dependencies (install only on Windows)
+# pythonnet==3.0.3  # For Windows integration
+# pywin32==306      # For Windows services
+
+# macOS-specific dependencies (install only on macOS)  
+# pyobjc==10.0      # For macOS integration
+
+# Linux-specific dependencies (install only on Linux)
+# python3-gi        # For GTK integration (install via system package manager)

@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - HackingGPT{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold neon-glow" style="color: var(--accent-blue);">
+                <i class="fas fa-tachometer-alt mr-3"></i>
+                Mission Control
+            </h1>
+            <p class="text-gray-400 mt-2">Welcome back, {{ user.username }}. Ready for your next operation?</p>
+        </div>
+        <div class="mt-4 lg:mt-0">
+            <div class="flex items-center space-x-4">
+                <div class="status-indicator status-online"></div>
+                <span class="text-sm text-gray-300">System Online</span>
+                <div class="text-sm">
+                    <span class="text-gray-400">Last Login:</span>
+                    <span class="text-green-400">{{ user.last_login or 'First time' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <a href="{{ url_for('chat') }}" class="cyber-card p-6 hover:bg-gray-700 transition-colors group">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-comments text-2xl group-hover:scale-110 transition-transform" style="color: var(--accent-blue);"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold">Start Chat</h3>
+                    <p class="text-sm text-gray-400">AI-powered assistance</p>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('scans') }}" class="cyber-card p-6 hover:bg-gray-700 transition-colors group">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-search text-2xl group-hover:scale-110 transition-transform" style="color: var(--accent-green);"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold">Vulnerability Scan</h3>
+                    <p class="text-sm text-gray-400">Automated security testing</p>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('tools') }}" class="cyber-card p-6 hover:bg-gray-700 transition-colors group">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-tools text-2xl group-hover:scale-110 transition-transform" style="color: var(--accent-pink);"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold">Security Tools</h3>
+                    <p class="text-sm text-gray-400">Pentesting arsenal</p>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('profile') }}" class="cyber-card p-6 hover:bg-gray-700 transition-colors group">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-user text-2xl group-hover:scale-110 transition-transform" style="color: var(--accent-yellow);"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold">Profile</h3>
+                    <p class="text-sm text-gray-400">Activity & stats</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    
+    <!-- Statistics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- API Usage -->
+        <div class="cyber-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">API Requests</p>
+                    <p class="text-2xl font-bold">{{ stats.api_requests }}</p>
+                </div>
+                <div class="p-3 bg-blue-900 rounded-full">
+                    <i class="fas fa-robot text-blue-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <i class="fas fa-arrow-up text-green-400 mr-1"></i>
+                <span class="text-green-400">This month</span>
+            </div>
+        </div>
+        
+        <!-- Tokens Used -->
+        <div class="cyber-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Tokens Used</p>
+                    <p class="text-2xl font-bold">{{ "{:,.0f}".format(stats.tokens_used) }}</p>
+                </div>
+                <div class="p-3 bg-green-900 rounded-full">
+                    <i class="fas fa-coins text-green-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <span class="text-gray-400">Cost: ${{ "%.2f"|format(stats.api_cost) }}</span>
+            </div>
+        </div>
+        
+        <!-- Commands Executed -->
+        <div class="cyber-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Commands Executed</p>
+                    <p class="text-2xl font-bold">{{ stats.commands_executed }}</p>
+                </div>
+                <div class="p-3 bg-pink-900 rounded-full">
+                    <i class="fas fa-terminal text-pink-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <span class="text-gray-400">Success: {{ stats.successful_commands }}/{{ stats.commands_executed }}</span>
+            </div>
+        </div>
+        
+        <!-- Quota Remaining -->
+        <div class="cyber-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">API Quota</p>
+                    <p class="text-2xl font-bold {% if user.api_quota < 10 %}text-red-400{% endif %}">{{ user.api_quota }}</p>
+                </div>
+                <div class="p-3 {% if user.is_premium %}bg-yellow-900{% else %}bg-gray-700{% endif %} rounded-full">
+                    <i class="fas fa-{% if user.is_premium %}crown{% else %}hourglass-half{% endif %} {% if user.is_premium %}text-yellow-400{% else %}text-gray-400{% endif %}"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <span class="{% if user.is_premium %}text-yellow-400{% else %}text-gray-400{% endif %}">
+                    {% if user.is_premium %}Premium Account{% else %}Free Tier{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Conversations -->
+        <div class="lg:col-span-2">
+            <div class="cyber-card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold">
+                        <i class="fas fa-comments mr-2" style="color: var(--accent-blue);"></i>
+                        Recent Conversations
+                    </h2>
+                    <a href="{{ url_for('chat') }}" class="text-blue-400 hover:text-blue-300 text-sm">
+                        View All <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+                
+                {% if conversations %}
+                <div class="space-y-4">
+                    {% for conv in conversations %}
+                    <div class="border border-gray-600 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-sm">{{ conv.title }}</h3>
+                                <div class="flex items-center mt-2 text-xs text-gray-400">
+                                    <span class="bg-gray-600 px-2 py-1 rounded">{{ conv.model }}</span>
+                                    <span class="ml-2">{{ conv.updated_at }}</span>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('chat', conversation_id=conv.id) }}" 
+                               class="text-blue-400 hover:text-blue-300 ml-4">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-comments text-4xl text-gray-600 mb-4"></i>
+                    <p class="text-gray-400">No conversations yet</p>
+                    <a href="{{ url_for('chat') }}" class="btn-cyber px-4 py-2 rounded mt-4 inline-block">
+                        Start Your First Chat
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- System Status -->
+        <div class="space-y-6">
+            <!-- Account Status -->
+            <div class="cyber-card p-6">
+                <h3 class="text-lg font-bold mb-4">
+                    <i class="fas fa-user-shield mr-2" style="color: var(--accent-green);"></i>
+                    Account Status
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-400">Account Type:</span>
+                        <span class="{% if user.is_premium %}text-yellow-400{% else %}text-gray-300{% endif %}">
+                            {% if user.is_premium %}Premium{% else %}Free{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-400">API Quota:</span>
+                        <span class="{% if user.api_quota < 10 %}text-red-400{% else %}text-green-400{% endif %}">
+                            {{ user.api_quota }} requests
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-400">Member Since:</span>
+                        <span class="text-gray-300">{{ user.created_at[:10] if user.created_at else 'Today' }}</span>
+                    </div>
+                </div>
+                
+                {% if not user.is_premium %}
+                <div class="mt-4 pt-4 border-t border-gray-600">
+                    <button class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold py-2 px-4 rounded hover:from-yellow-400 hover:to-yellow-500 transition-all">
+                        <i class="fas fa-crown mr-2"></i>
+                        Upgrade to Premium
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="cyber-card p-6">
+                <h3 class="text-lg font-bold mb-4">
+                    <i class="fas fa-chart-line mr-2" style="color: var(--accent-pink);"></i>
+                    Quick Stats
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-400">API Usage</span>
+                            <span>{{ stats.api_requests }}/{{ user.api_quota + stats.api_requests }}</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: {{ (stats.api_requests / (user.api_quota + stats.api_requests) * 100) if (user.api_quota + stats.api_requests) > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-400">Command Success</span>
+                            <span>{{ ((stats.successful_commands / stats.commands_executed * 100) if stats.commands_executed > 0 else 100)|round }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: {{ (stats.successful_commands / stats.commands_executed * 100) if stats.commands_executed > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Tips -->
+            <div class="cyber-card p-6">
+                <h3 class="text-lg font-bold mb-4">
+                    <i class="fas fa-shield-alt mr-2" style="color: var(--accent-yellow);"></i>
+                    Security Tip
+                </h3>
+                
+                <div class="bg-gray-800 p-4 rounded border-l-4 border-yellow-400">
+                    <p class="text-sm text-gray-300">
+                        <strong>Always verify permissions:</strong> Ensure you have proper authorization before conducting any security tests on target systems.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Terminal Output -->
+    <div class="cyber-card p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold">
+                <i class="fas fa-terminal mr-2" style="color: var(--accent-green);"></i>
+                System Console
+            </h2>
+            <div class="text-sm text-gray-400">
+                <i class="fas fa-circle text-green-400 mr-1"></i>
+                Online
+            </div>
+        </div>
+        
+        <div class="bg-black rounded-lg p-4 font-mono text-sm">
+            <div class="text-green-400">
+                <div class="mb-2">┌──({{ user.username }}㉿hackinggpt)-[~/dashboard]</div>
+                <div class="mb-2">└─▶ system status</div>
+                <div class="text-white mb-2">
+                    <span class="text-blue-300">[INFO]</span> HackingGPT Terminal v2.1.0 - Ready for operations
+                </div>
+                <div class="text-white mb-2">
+                    <span class="text-green-300">[OK]</span> AI Models: Online (GPT-4, DeepSeek)
+                </div>
+                <div class="text-white mb-2">
+                    <span class="text-green-300">[OK]</span> Security Tools: {{ stats.commands_executed }} tools executed
+                </div>
+                <div class="text-white mb-2">
+                    <span class="text-blue-300">[INFO]</span> Last activity: {{ user.last_login or 'First session' }}
+                </div>
+                <div class="mt-4">
+                    └─▶ <span class="animate-pulse">█</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh stats every 30 seconds
+    setInterval(function() {
+        // Could implement real-time stats updates here
+    }, 30000);
+    
+    // Add hover effects to stat cards
+    const statCards = document.querySelectorAll('.cyber-card');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

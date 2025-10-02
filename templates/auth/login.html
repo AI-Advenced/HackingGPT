@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Login - HackingGPT{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+        <div class="cyber-card p-8 terminal-border">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold neon-glow" style="color: var(--accent-blue);">
+                    <i class="fas fa-sign-in-alt mr-3"></i>
+                    Access Terminal
+                </h2>
+                <p class="text-gray-400 mt-2">Enter your credentials to continue</p>
+            </div>
+            
+            <!-- ASCII Art -->
+            <div class="bg-black p-4 rounded font-mono text-xs text-green-400 mb-6 overflow-x-auto">
+                <pre>
+    ╔══════════════════════════════╗
+    ║      SECURE LOGIN PORTAL     ║
+    ║         [AUTHORIZED]         ║
+    ╚══════════════════════════════╝
+                </pre>
+            </div>
+            
+            <!-- Login Form -->
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-user mr-2" style="color: var(--accent-blue);"></i>
+                        Username or Email
+                    </label>
+                    <input type="text" 
+                           id="username" 
+                           name="username" 
+                           required
+                           class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                           placeholder="Enter your username or email"
+                           autocomplete="username">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-lock mr-2" style="color: var(--accent-pink);"></i>
+                        Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               required
+                               class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                               placeholder="Enter your password"
+                               autocomplete="current-password">
+                        <button type="button" 
+                                id="toggle-password"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input type="checkbox" 
+                               id="remember-me" 
+                               name="remember-me"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="remember-me" class="ml-2 block text-sm">
+                            Remember me
+                        </label>
+                    </div>
+                    
+                    <div class="text-sm">
+                        <a href="#" class="text-blue-400 hover:text-blue-300 transition-colors">
+                            Forgot password?
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <button type="submit" 
+                            class="w-full btn-cyber py-3 px-4 rounded-lg font-medium transition-all duration-200">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Initialize Connection
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Divider -->
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-600"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-gray-900 text-gray-400">Or</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Register Link -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-400">
+                    New to HackingGPT?
+                    <a href="{{ url_for('register') }}" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                        Create an account
+                    </a>
+                </p>
+            </div>
+            
+            <!-- Security Notice -->
+            <div class="mt-6 p-4 bg-yellow-900 border border-yellow-600 rounded-lg">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 mt-1 mr-3"></i>
+                    <div class="text-yellow-200 text-sm">
+                        <strong>Security Notice:</strong> This platform is intended for authorized security testing only. 
+                        Misuse may result in legal consequences.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password visibility toggle
+    const togglePassword = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('password');
+    
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    });
+    
+    // Form submission with loading state
+    const form = document.querySelector('form');
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    form.addEventListener('submit', function() {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Connecting...';
+    });
+    
+    // Terminal-style typing effect for placeholder
+    function typeEffect(element, text, delay = 100) {
+        let i = 0;
+        element.placeholder = '';
+        
+        function type() {
+            if (i < text.length) {
+                element.placeholder += text.charAt(i);
+                i++;
+                setTimeout(type, delay);
+            }
+        }
+        
+        type();
+    }
+    
+    // Apply typing effect to inputs
+    setTimeout(() => {
+        typeEffect(document.getElementById('username'), 'Enter your username or email', 50);
+    }, 500);
+    
+    setTimeout(() => {
+        typeEffect(document.getElementById('password'), 'Enter your password', 50);
+    }, 1500);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Register - HackingGPT{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+        <div class="cyber-card p-8 terminal-border">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold neon-glow" style="color: var(--accent-green);">
+                    <i class="fas fa-user-plus mr-3"></i>
+                    Create Account
+                </h2>
+                <p class="text-gray-400 mt-2">Join the cybersecurity community</p>
+            </div>
+            
+            <!-- ASCII Art -->
+            <div class="bg-black p-4 rounded font-mono text-xs text-green-400 mb-6 overflow-x-auto">
+                <pre>
+    ╔══════════════════════════════╗
+    ║     USER REGISTRATION        ║
+    ║       [INITIALIZING]         ║
+    ╚══════════════════════════════╝
+                </pre>
+            </div>
+            
+            <!-- Registration Form -->
+            <form method="POST" class="space-y-6" id="register-form">
+                <div>
+                    <label for="username" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-user mr-2" style="color: var(--accent-blue);"></i>
+                        Username
+                    </label>
+                    <input type="text" 
+                           id="username" 
+                           name="username" 
+                           required
+                           minlength="3"
+                           maxlength="50"
+                           pattern="^[a-zA-Z0-9_-]+$"
+                           class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                           placeholder="Choose a unique username"
+                           autocomplete="username">
+                    <p class="text-xs text-gray-400 mt-1">Only letters, numbers, underscores, and hyphens allowed</p>
+                </div>
+                
+                <div>
+                    <label for="email" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-envelope mr-2" style="color: var(--accent-pink);"></i>
+                        Email Address
+                    </label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           required
+                           class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                           placeholder="your.email@domain.com"
+                           autocomplete="email">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-lock mr-2" style="color: var(--accent-yellow);"></i>
+                        Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               required
+                               minlength="8"
+                               class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                               placeholder="Create a strong password"
+                               autocomplete="new-password">
+                    </div>
+                    
+                    <!-- Password Strength Indicator -->
+                    <div class="mt-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-400">Password Strength:</span>
+                            <span id="password-strength" class="font-medium">Weak</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2 mt-1">
+                            <div id="password-strength-bar" class="bg-red-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="password-requirements" class="mt-2 space-y-1 text-xs">
+                            <div class="flex items-center">
+                                <i id="req-length" class="fas fa-times text-red-400 mr-2"></i>
+                                <span>At least 8 characters</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i id="req-uppercase" class="fas fa-times text-red-400 mr-2"></i>
+                                <span>One uppercase letter</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i id="req-lowercase" class="fas fa-times text-red-400 mr-2"></i>
+                                <span>One lowercase letter</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i id="req-number" class="fas fa-times text-red-400 mr-2"></i>
+                                <span>One number</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-lock mr-2" style="color: var(--accent-yellow);"></i>
+                        Confirm Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               id="confirm_password" 
+                               name="confirm_password" 
+                               required
+                               class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                               placeholder="Confirm your password"
+                               autocomplete="new-password">
+                        <div id="password-match" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <i class="fas fa-times text-red-400 hidden"></i>
+                            <i class="fas fa-check text-green-400 hidden"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Terms and Conditions -->
+                <div class="flex items-start">
+                    <input type="checkbox" 
+                           id="terms" 
+                           name="terms" 
+                           required
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1">
+                    <label for="terms" class="ml-2 text-sm">
+                        I agree to the 
+                        <a href="#" class="text-blue-400 hover:text-blue-300 transition-colors">Terms of Service</a>
+                        and acknowledge that I will use this platform only for authorized security testing.
+                    </label>
+                </div>
+                
+                <div>
+                    <button type="submit" 
+                            id="submit-btn"
+                            class="w-full btn-cyber py-3 px-4 rounded-lg font-medium transition-all duration-200"
+                            disabled>
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Create Account
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Divider -->
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-600"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-gray-900 text-gray-400">Already have an account?</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Login Link -->
+            <div class="mt-6 text-center">
+                <a href="{{ url_for('login') }}" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Sign in to your account
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('register-form');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    const submitBtn = document.getElementById('submit-btn');
+    const termsCheckbox = document.getElementById('terms');
+    
+    // Password strength checking
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        const requirements = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /\d/.test(password)
+        };
+        
+        // Update requirement indicators
+        Object.keys(requirements).forEach(req => {
+            const element = document.getElementById(`req-${req}`);
+            if (requirements[req]) {
+                element.className = 'fas fa-check text-green-400 mr-2';
+                strength++;
+            } else {
+                element.className = 'fas fa-times text-red-400 mr-2';
+            }
+        });
+        
+        // Update strength bar
+        const strengthBar = document.getElementById('password-strength-bar');
+        const strengthText = document.getElementById('password-strength');
+        
+        const percentage = (strength / 4) * 100;
+        strengthBar.style.width = percentage + '%';
+        
+        if (strength <= 1) {
+            strengthBar.className = 'bg-red-500 h-2 rounded-full transition-all duration-300';
+            strengthText.textContent = 'Weak';
+            strengthText.className = 'font-medium text-red-400';
+        } else if (strength <= 2) {
+            strengthBar.className = 'bg-yellow-500 h-2 rounded-full transition-all duration-300';
+            strengthText.textContent = 'Fair';
+            strengthText.className = 'font-medium text-yellow-400';
+        } else if (strength <= 3) {
+            strengthBar.className = 'bg-blue-500 h-2 rounded-full transition-all duration-300';
+            strengthText.textContent = 'Good';
+            strengthText.className = 'font-medium text-blue-400';
+        } else {
+            strengthBar.className = 'bg-green-500 h-2 rounded-full transition-all duration-300';
+            strengthText.textContent = 'Strong';
+            strengthText.className = 'font-medium text-green-400';
+        }
+        
+        return strength >= 3;
+    }
+    
+    // Password matching
+    function checkPasswordMatch() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        const matchIndicator = document.getElementById('password-match');
+        const checkIcon = matchIndicator.querySelector('.fa-check');
+        const timesIcon = matchIndicator.querySelector('.fa-times');
+        
+        if (confirmPassword.length === 0) {
+            checkIcon.classList.add('hidden');
+            timesIcon.classList.add('hidden');
+            return false;
+        }
+        
+        if (password === confirmPassword) {
+            checkIcon.classList.remove('hidden');
+            timesIcon.classList.add('hidden');
+            return true;
+        } else {
+            checkIcon.classList.add('hidden');
+            timesIcon.classList.remove('hidden');
+            return false;
+        }
+    }
+    
+    // Form validation
+    function validateForm() {
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        const terms = termsCheckbox.checked;
+        
+        const isValid = username.length >= 3 && 
+                       email.includes('@') && 
+                       checkPasswordStrength(password) && 
+                       checkPasswordMatch() && 
+                       terms;
+        
+        submitBtn.disabled = !isValid;
+        
+        if (isValid) {
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+    
+    // Event listeners
+    passwordInput.addEventListener('input', function() {
+        checkPasswordStrength(this.value);
+        validateForm();
+    });
+    
+    confirmPasswordInput.addEventListener('input', function() {
+        checkPasswordMatch();
+        validateForm();
+    });
+    
+    ['username', 'email'].forEach(id => {
+        document.getElementById(id).addEventListener('input', validateForm);
+    });
+    
+    termsCheckbox.addEventListener('change', validateForm);
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        if (submitBtn.disabled) {
+            e.preventDefault();
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating Account...';
+    });
+    
+    // Initial validation
+    validateForm();
+});
+</script>
+{% endblock %}

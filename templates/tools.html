@@ -1,0 +1,1004 @@
+{% extends "base.html" %}
+
+{% block title %}Pentesting Tools - HackingGPT{% endblock %}
+
+{% block head %}
+<style>
+    .tool-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .tool-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        border-color: var(--accent-blue);
+    }
+    
+    .category-header {
+        background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+        border-left: 4px solid var(--accent-blue);
+    }
+    
+    .risk-indicator {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .risk-low {
+        background: rgba(34, 197, 94, 0.2);
+        color: #4ade80;
+        border: 1px solid #22c55e;
+    }
+    
+    .risk-medium {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+        border: 1px solid #f59e0b;
+    }
+    
+    .risk-high {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid #ef4444;
+    }
+    
+    .usage-count {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .command-template {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        position: relative;
+    }
+    
+    .copy-command-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 0.25rem;
+        padding: 0.25rem;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    
+    .command-template:hover .copy-command-btn {
+        opacity: 1;
+    }
+    
+    .search-highlight {
+        background: rgba(255, 255, 0, 0.3);
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+    }
+    
+    .tool-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .install-guide {
+        background: var(--bg-tertiary);
+        border-left: 4px solid var(--accent-green);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .tool-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .tool-action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-execute {
+        background: linear-gradient(45deg, var(--accent-green), #20b2aa);
+        color: white;
+    }
+    
+    .btn-execute:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 255, 136, 0.3);
+    }
+    
+    .btn-tutorial {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+    
+    .btn-tutorial:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--accent-blue);
+    }
+    
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .category-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .tool-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold neon-glow" style="color: var(--accent-blue);">
+                <i class="fas fa-tools mr-3"></i>
+                Pentesting Arsenal
+            </h1>
+            <p class="text-gray-400 mt-2">Complete collection of cybersecurity tools and utilities</p>
+        </div>
+        <div class="mt-4 lg:mt-0 flex items-center space-x-4">
+            <button id="add-tool-btn" class="btn-cyber px-6 py-3 rounded-lg">
+                <i class="fas fa-plus mr-2"></i>
+                Add Tool
+            </button>
+            <button id="export-tools-btn" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg transition-colors">
+                <i class="fas fa-download mr-2"></i>
+                Export
+            </button>
+        </div>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="cyber-card p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+            <!-- Search -->
+            <div class="flex-1">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" 
+                           id="tool-search" 
+                           placeholder="Search tools by name, category, or description..."
+                           class="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="flex items-center space-x-4">
+                <select id="category-filter" class="bg-gray-800 border border-gray-600 rounded px-3 py-2">
+                    <option value="">All Categories</option>
+                    {% for category in tools_by_category.keys() %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+                
+                <select id="risk-filter" class="bg-gray-800 border border-gray-600 rounded px-3 py-2">
+                    <option value="">All Risk Levels</option>
+                    <option value="low">Low Risk</option>
+                    <option value="medium">Medium Risk</option>
+                    <option value="high">High Risk</option>
+                </select>
+                
+                <button id="clear-filters-btn" class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm">
+                    <i class="fas fa-times mr-1"></i>
+                    Clear
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tool Statistics -->
+    <div class="tool-stats">
+        <div class="cyber-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Total Tools</p>
+                    <p class="text-2xl font-bold" id="total-tools">
+                        {% set total = tools_by_category.values() | map('length') | sum %}
+                        {{ total }}
+                    </p>
+                </div>
+                <div class="p-3 bg-blue-900 rounded-full">
+                    <i class="fas fa-tools text-blue-400"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cyber-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Categories</p>
+                    <p class="text-2xl font-bold">{{ tools_by_category.keys()|length }}</p>
+                </div>
+                <div class="p-3 bg-green-900 rounded-full">
+                    <i class="fas fa-layer-group text-green-400"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cyber-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">High Risk</p>
+                    <p class="text-2xl font-bold text-red-400">
+                        {% set high_risk = [] %}
+                        {% for category, tools in tools_by_category.items() %}
+                            {% for tool in tools %}
+                                {% if tool.risk_level == 'high' %}
+                                    {% set _ = high_risk.append(tool) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        {{ high_risk|length }}
+                    </p>
+                </div>
+                <div class="p-3 bg-red-900 rounded-full">
+                    <i class="fas fa-exclamation-triangle text-red-400"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cyber-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Most Used</p>
+                    <p class="text-lg font-bold text-yellow-400">
+                        {% set most_used = '' %}
+                        {% set max_usage = 0 %}
+                        {% for category, tools in tools_by_category.items() %}
+                            {% for tool in tools %}
+                                {% if tool.usage_count > max_usage %}
+                                    {% set max_usage = tool.usage_count %}
+                                    {% set most_used = tool.name %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        {{ most_used or 'N/A' }}
+                    </p>
+                </div>
+                <div class="p-3 bg-yellow-900 rounded-full">
+                    <i class="fas fa-star text-yellow-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tools by Category -->
+    <div id="tools-container">
+        {% for category, tools in tools_by_category.items() %}
+        <div class="tool-category" data-category="{{ category }}">
+            <div class="category-header p-4 rounded-lg mb-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold">
+                        <i class="fas fa-
+                            {%- if 'Network' in category -%}network-wired
+                            {%- elif 'Web' in category -%}globe
+                            {%- elif 'Exploitation' in category -%}bug
+                            {%- elif 'Reconnaissance' in category -%}search
+                            {%- elif 'Forensics' in category -%}microscope
+                            {%- elif 'Wireless' in category -%}wifi
+                            {%- else -%}cog
+                            {%- endif -%} mr-3" style="color: var(--accent-green);"></i>
+                        {{ category }}
+                    </h2>
+                    <span class="bg-gray-700 px-3 py-1 rounded-full text-sm">{{ tools|length }} tools</span>
+                </div>
+            </div>
+            
+            <div class="category-grid mb-12">
+                {% for tool in tools %}
+                <div class="tool-card cyber-card p-6" 
+                     data-name="{{ tool.name.lower() }}" 
+                     data-category="{{ category.lower() }}" 
+                     data-risk="{{ tool.risk_level }}"
+                     data-description="{{ tool.description.lower() }}">
+                    
+                    <!-- Tool Header -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">{{ tool.name }}</h3>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <span class="risk-indicator risk-{{ tool.risk_level }}">{{ tool.risk_level }}</span>
+                                <span class="usage-count">
+                                    <i class="fas fa-chart-bar mr-1"></i>
+                                    {{ tool.usage_count }} uses
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Tool Icon -->
+                        <div class="p-3 bg-gray-700 rounded-full">
+                            <i class="fas fa-
+                                {%- if tool.name.lower() in ['nmap', 'masscan'] -%}network-wired
+                                {%- elif tool.name.lower() in ['nikto', 'dirb', 'gobuster'] -%}globe
+                                {%- elif tool.name.lower() in ['sqlmap', 'burpsuite'] -%}database
+                                {%- elif tool.name.lower() in ['metasploit', 'msfconsole'] -%}crosshairs
+                                {%- elif tool.name.lower() in ['wireshark', 'tcpdump'] -%}eye
+                                {%- elif tool.name.lower() in ['aircrack-ng', 'wifite'] -%}wifi
+                                {%- else -%}terminal
+                                {%- endif -%} text-blue-400"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <p class="text-gray-300 mb-4 line-clamp-2">{{ tool.description }}</p>
+                    
+                    <!-- Command Template -->
+                    {% if tool.command_template %}
+                    <div class="command-template mb-4">
+                        <code class="text-green-400">{{ tool.command_template }}</code>
+                        <button class="copy-command-btn" onclick="copyToClipboard('{{ tool.command_template }}')">
+                            <i class="fas fa-copy text-xs"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Installation Guide -->
+                    {% if tool.installation_guide %}
+                    <div class="install-guide">
+                        <div class="flex items-start">
+                            <i class="fas fa-download text-green-400 mr-2 mt-1"></i>
+                            <div>
+                                <h4 class="font-semibold text-sm mb-1">Installation</h4>
+                                <code class="text-xs text-gray-300">{{ tool.installation_guide }}</code>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Platform Compatibility -->
+                    {% if tool.platform_compatibility %}
+                    <div class="mt-4">
+                        <div class="flex items-center text-xs text-gray-400">
+                            <i class="fas fa-desktop mr-2"></i>
+                            <span>Compatible: {{ tool.platform_compatibility }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Tool Actions -->
+                    <div class="tool-actions">
+                        <button onclick="executeTool('{{ tool.name }}', '{{ tool.command_template }}')" 
+                                class="tool-action-btn btn-execute">
+                            <i class="fas fa-play"></i>
+                            Execute
+                        </button>
+                        
+                        <button onclick="showTutorial('{{ tool.name }}')" 
+                                class="tool-action-btn btn-tutorial">
+                            <i class="fas fa-book"></i>
+                            Tutorial
+                        </button>
+                        
+                        <button onclick="addToFavorites('{{ tool.name }}')" 
+                                class="tool-action-btn btn-tutorial">
+                            <i class="fas fa-heart"></i>
+                            Favorite
+                        </button>
+                        
+                        <button onclick="shareTool('{{ tool.name }}')" 
+                                class="tool-action-btn btn-tutorial">
+                            <i class="fas fa-share"></i>
+                            Share
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Empty State -->
+    <div id="no-tools-found" class="hidden text-center py-12">
+        <div class="cyber-card p-8 max-w-2xl mx-auto">
+            <i class="fas fa-search text-6xl text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-bold mb-2">No Tools Found</h3>
+            <p class="text-gray-400 mb-6">Try adjusting your search criteria or filters</p>
+            <button onclick="clearFilters()" class="btn-cyber px-6 py-3 rounded-lg">
+                <i class="fas fa-times mr-2"></i>
+                Clear Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tool Execution Modal -->
+<div id="execution-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="cyber-card p-8 max-w-4xl w-full terminal-border max-h-screen overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">
+                    <i class="fas fa-terminal mr-3" style="color: var(--accent-green);"></i>
+                    Execute Tool: <span id="tool-name"></span>
+                </h2>
+                <button id="close-execution-btn" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="execution-form" class="space-y-6">
+                <!-- Command Input -->
+                <div>
+                    <label for="command-input" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-code mr-2" style="color: var(--accent-blue);"></i>
+                        Command
+                    </label>
+                    <div class="relative">
+                        <input type="text" 
+                               id="command-input" 
+                               name="command" 
+                               class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                               placeholder="Enter command to execute...">
+                        <button type="button" 
+                                id="reset-command-btn" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Target Input -->
+                <div>
+                    <label for="target-input" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-bullseye mr-2" style="color: var(--accent-pink);"></i>
+                        Target (if applicable)
+                    </label>
+                    <input type="text" 
+                           id="target-input" 
+                           name="target" 
+                           placeholder="e.g., example.com, 192.168.1.1"
+                           class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <!-- Options -->
+                <div>
+                    <label for="options-input" class="block text-sm font-medium mb-2">
+                        <i class="fas fa-cog mr-2" style="color: var(--accent-yellow);"></i>
+                        Additional Options
+                    </label>
+                    <input type="text" 
+                           id="options-input" 
+                           name="options" 
+                           placeholder="e.g., -sS -T4 --top-ports 1000"
+                           class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono">
+                </div>
+                
+                <!-- Risk Warning -->
+                <div id="risk-warning" class="hidden p-4 bg-red-900 border border-red-600 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-400 mt-1 mr-3"></i>
+                        <div class="text-red-200 text-sm">
+                            <strong>High Risk Tool:</strong> This tool can cause significant impact. 
+                            Ensure you have proper authorization before executing.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-4">
+                    <button type="button" 
+                            id="cancel-execution-btn" 
+                            class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            id="execute-btn" 
+                            class="btn-cyber px-6 py-3 rounded-lg">
+                        <i class="fas fa-play mr-2"></i>
+                        Execute
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Execution Output -->
+            <div id="execution-output" class="hidden mt-6">
+                <h3 class="text-lg font-bold mb-4">
+                    <i class="fas fa-terminal mr-2" style="color: var(--accent-green);"></i>
+                    Output
+                </h3>
+                
+                <div class="bg-black rounded-lg p-4 font-mono text-sm">
+                    <pre id="output-content" class="text-green-400 whitespace-pre-wrap"></pre>
+                </div>
+                
+                <div class="mt-4 flex items-center justify-between">
+                    <div class="text-sm text-gray-400">
+                        <span>Exit Code: <span id="exit-code" class="font-bold"></span></span>
+                        <span class="ml-4">Duration: <span id="execution-time" class="font-bold"></span>s</span>
+                    </div>
+                    <div class="space-x-2">
+                        <button onclick="copyOutput()" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm">
+                            <i class="fas fa-copy mr-1"></i>
+                            Copy
+                        </button>
+                        <button onclick="saveOutput()" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm">
+                            <i class="fas fa-save mr-1"></i>
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tutorial Modal -->
+<div id="tutorial-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="cyber-card p-8 max-w-4xl w-full terminal-border max-h-screen overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">
+                    <i class="fas fa-book mr-3" style="color: var(--accent-blue);"></i>
+                    Tutorial: <span id="tutorial-tool-name"></span>
+                </h2>
+                <button id="close-tutorial-btn" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="tutorial-content" class="prose prose-invert max-w-none">
+                <!-- Tutorial content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentToolTemplate = '';
+let isExecuting = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Search and filter elements
+    const toolSearch = document.getElementById('tool-search');
+    const categoryFilter = document.getElementById('category-filter');
+    const riskFilter = document.getElementById('risk-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters-btn');
+    
+    // Modal elements
+    const executionModal = document.getElementById('execution-modal');
+    const tutorialModal = document.getElementById('tutorial-modal');
+    
+    // Form elements
+    const executionForm = document.getElementById('execution-form');
+    const commandInput = document.getElementById('command-input');
+    const targetInput = document.getElementById('target-input');
+    const optionsInput = document.getElementById('options-input');
+    
+    // Event listeners
+    toolSearch.addEventListener('input', filterTools);
+    categoryFilter.addEventListener('change', filterTools);
+    riskFilter.addEventListener('change', filterTools);
+    clearFiltersBtn.addEventListener('click', clearFilters);
+    
+    // Modal close buttons
+    document.getElementById('close-execution-btn').addEventListener('click', () => closeModal(executionModal));
+    document.getElementById('close-tutorial-btn').addEventListener('click', () => closeModal(tutorialModal));
+    document.getElementById('cancel-execution-btn').addEventListener('click', () => closeModal(executionModal));
+    
+    // Reset command button
+    document.getElementById('reset-command-btn').addEventListener('click', function() {
+        commandInput.value = currentToolTemplate;
+        updateCommand();
+    });
+    
+    // Command form inputs
+    [targetInput, optionsInput].forEach(input => {
+        input.addEventListener('input', updateCommand);
+    });
+    
+    // Execution form
+    executionForm.addEventListener('submit', handleExecution);
+    
+    // Close modals on outside click
+    window.addEventListener('click', function(e) {
+        if (e.target === executionModal) closeModal(executionModal);
+        if (e.target === tutorialModal) closeModal(tutorialModal);
+    });
+    
+    // Initialize
+    updateToolCount();
+});
+
+function filterTools() {
+    const searchTerm = document.getElementById('tool-search').value.toLowerCase();
+    const categoryFilter = document.getElementById('category-filter').value.toLowerCase();
+    const riskFilter = document.getElementById('risk-filter').value.toLowerCase();
+    
+    const toolCards = document.querySelectorAll('.tool-card');
+    const categories = document.querySelectorAll('.tool-category');
+    let visibleToolsCount = 0;
+    
+    // Filter individual tools
+    toolCards.forEach(card => {
+        const name = card.getAttribute('data-name');
+        const category = card.getAttribute('data-category');
+        const risk = card.getAttribute('data-risk');
+        const description = card.getAttribute('data-description');
+        
+        const matchesSearch = !searchTerm || 
+            name.includes(searchTerm) || 
+            category.includes(searchTerm) || 
+            description.includes(searchTerm);
+            
+        const matchesCategory = !categoryFilter || category.includes(categoryFilter);
+        const matchesRisk = !riskFilter || risk === riskFilter;
+        
+        if (matchesSearch && matchesCategory && matchesRisk) {
+            card.style.display = '';
+            visibleToolsCount++;
+            
+            // Highlight search terms
+            if (searchTerm) {
+                highlightSearchTerm(card, searchTerm);
+            } else {
+                removeHighlights(card);
+            }
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Hide empty categories
+    categories.forEach(category => {
+        const visibleTools = category.querySelectorAll('.tool-card:not([style*="display: none"])');
+        if (visibleTools.length === 0) {
+            category.style.display = 'none';
+        } else {
+            category.style.display = '';
+        }
+    });
+    
+    // Show/hide empty state
+    const noToolsFound = document.getElementById('no-tools-found');
+    if (visibleToolsCount === 0) {
+        noToolsFound.classList.remove('hidden');
+    } else {
+        noToolsFound.classList.add('hidden');
+    }
+    
+    updateToolCount(visibleToolsCount);
+}
+
+function clearFilters() {
+    document.getElementById('tool-search').value = '';
+    document.getElementById('category-filter').value = '';
+    document.getElementById('risk-filter').value = '';
+    
+    // Remove highlights
+    document.querySelectorAll('.tool-card').forEach(card => {
+        removeHighlights(card);
+    });
+    
+    filterTools();
+}
+
+function highlightSearchTerm(card, term) {
+    const textElements = card.querySelectorAll('h3, p');
+    textElements.forEach(element => {
+        const text = element.textContent;
+        const regex = new RegExp(`(${term})`, 'gi');
+        const highlightedText = text.replace(regex, '<span class="search-highlight">$1</span>');
+        if (highlightedText !== text) {
+            element.innerHTML = highlightedText;
+        }
+    });
+}
+
+function removeHighlights(card) {
+    const highlightedElements = card.querySelectorAll('.search-highlight');
+    highlightedElements.forEach(element => {
+        element.outerHTML = element.textContent;
+    });
+}
+
+function updateToolCount(count) {
+    const totalToolsElement = document.getElementById('total-tools');
+    if (count !== undefined) {
+        totalToolsElement.textContent = count;
+    }
+}
+
+function executeTool(toolName, commandTemplate) {
+    const executionModal = document.getElementById('execution-modal');
+    const toolNameSpan = document.getElementById('tool-name');
+    const commandInput = document.getElementById('command-input');
+    const riskWarning = document.getElementById('risk-warning');
+    
+    // Set tool information
+    toolNameSpan.textContent = toolName;
+    commandInput.value = commandTemplate || `${toolName.toLowerCase()} `;
+    currentToolTemplate = commandTemplate || `${toolName.toLowerCase()} `;
+    
+    // Check if tool is high risk
+    const toolCard = document.querySelector(`[data-name="${toolName.toLowerCase()}"]`);
+    const riskLevel = toolCard ? toolCard.getAttribute('data-risk') : 'medium';
+    
+    if (riskLevel === 'high') {
+        riskWarning.classList.remove('hidden');
+    } else {
+        riskWarning.classList.add('hidden');
+    }
+    
+    // Clear previous outputs
+    document.getElementById('execution-output').classList.add('hidden');
+    document.getElementById('target-input').value = '';
+    document.getElementById('options-input').value = '';
+    
+    openModal(executionModal);
+}
+
+function updateCommand() {
+    const commandInput = document.getElementById('command-input');
+    const targetInput = document.getElementById('target-input');
+    const optionsInput = document.getElementById('options-input');
+    
+    let command = currentToolTemplate;
+    
+    // Replace placeholders
+    if (targetInput.value) {
+        command = command.replace('{target}', targetInput.value);
+        command = command.replace('{url}', targetInput.value);
+        command = command.replace('{host}', targetInput.value);
+    }
+    
+    // Add additional options
+    if (optionsInput.value) {
+        command += ' ' + optionsInput.value;
+    }
+    
+    commandInput.value = command;
+}
+
+async function handleExecution(e) {
+    e.preventDefault();
+    
+    if (isExecuting) return;
+    
+    const command = document.getElementById('command-input').value.trim();
+    if (!command) {
+        showNotification('Please enter a command to execute', 'error');
+        return;
+    }
+    
+    // Confirm execution
+    if (!confirm(`Execute command: ${command}\n\nAre you sure?`)) {
+        return;
+    }
+    
+    isExecuting = true;
+    const executeBtn = document.getElementById('execute-btn');
+    executeBtn.disabled = true;
+    executeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Executing...';
+    
+    try {
+        const response = await fetch('/api/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                command: command,
+                timeout: 300
+            })
+        });
+        
+        const result = await response.json();
+        displayExecutionResult(result);
+        
+    } catch (error) {
+        showNotification('Execution failed: ' + error.message, 'error');
+    } finally {
+        isExecuting = false;
+        executeBtn.disabled = false;
+        executeBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Execute';
+    }
+}
+
+function displayExecutionResult(result) {
+    const outputSection = document.getElementById('execution-output');
+    const outputContent = document.getElementById('output-content');
+    const exitCode = document.getElementById('exit-code');
+    const executionTime = document.getElementById('execution-time');
+    
+    outputContent.textContent = result.output || 'No output';
+    exitCode.textContent = result.exit_code;
+    exitCode.className = result.exit_code === 0 ? 'text-green-400' : 'text-red-400';
+    executionTime.textContent = (result.execution_time || 0).toFixed(2);
+    
+    outputSection.classList.remove('hidden');
+    outputSection.scrollIntoView({ behavior: 'smooth' });
+    
+    if (result.success && result.exit_code === 0) {
+        showNotification('Command executed successfully', 'success');
+    } else {
+        showNotification('Command execution completed with errors', 'warning');
+    }
+}
+
+function copyOutput() {
+    const outputContent = document.getElementById('output-content').textContent;
+    copyToClipboard(outputContent);
+}
+
+function saveOutput() {
+    const outputContent = document.getElementById('output-content').textContent;
+    const toolName = document.getElementById('tool-name').textContent;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `${toolName}_output_${timestamp}.txt`;
+    
+    const blob = new Blob([outputContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+async function showTutorial(toolName) {
+    const tutorialModal = document.getElementById('tutorial-modal');
+    const tutorialToolName = document.getElementById('tutorial-tool-name');
+    const tutorialContent = document.getElementById('tutorial-content');
+    
+    tutorialToolName.textContent = toolName;
+    tutorialContent.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-2">Loading tutorial...</p></div>';
+    
+    openModal(tutorialModal);
+    
+    try {
+        // This would fetch tutorial content from the server
+        // For now, we'll generate basic tutorial content
+        const content = generateTutorialContent(toolName);
+        tutorialContent.innerHTML = content;
+        
+    } catch (error) {
+        tutorialContent.innerHTML = `
+            <div class="text-center py-8 text-red-400">
+                <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                <p>Failed to load tutorial content</p>
+            </div>
+        `;
+    }
+}
+
+function generateTutorialContent(toolName) {
+    // Basic tutorial templates
+    const tutorials = {
+        'nmap': `
+            <h3>Nmap Tutorial</h3>
+            <p>Nmap (Network Mapper) is a powerful network discovery and security auditing tool.</p>
+            
+            <h4>Basic Usage:</h4>
+            <pre><code>nmap [target]</code></pre>
+            
+            <h4>Common Options:</h4>
+            <ul>
+                <li><code>-sS</code> - SYN scan (stealth scan)</li>
+                <li><code>-sV</code> - Version detection</li>
+                <li><code>-O</code> - OS detection</li>
+                <li><code>-A</code> - Aggressive scan</li>
+                <li><code>-T4</code> - Timing template (faster)</li>
+            </ul>
+            
+            <h4>Examples:</h4>
+            <pre><code>nmap -sS -T4 192.168.1.1
+nmap -sV -sC target.com
+nmap --top-ports 1000 192.168.1.0/24</code></pre>
+        `,
+        'nikto': `
+            <h3>Nikto Tutorial</h3>
+            <p>Nikto is a web server scanner that tests for dangerous files, outdated versions, and server configuration issues.</p>
+            
+            <h4>Basic Usage:</h4>
+            <pre><code>nikto -h [target]</code></pre>
+            
+            <h4>Common Options:</h4>
+            <ul>
+                <li><code>-h</code> - Target host</li>
+                <li><code>-p</code> - Port to scan</li>
+                <li><code>-ssl</code> - Force SSL</li>
+                <li><code>-output</code> - Output file</li>
+            </ul>
+            
+            <h4>Examples:</h4>
+            <pre><code>nikto -h http://target.com
+nikto -h https://target.com -p 443
+nikto -h target.com -output scan_results.txt</code></pre>
+        `
+    };
+    
+    return tutorials[toolName.toLowerCase()] || `
+        <h3>${toolName} Tutorial</h3>
+        <p>Tutorial content for ${toolName} is being prepared.</p>
+        <p>Please refer to the official documentation for detailed usage instructions.</p>
+        
+        <div class="mt-6 p-4 bg-blue-900 border border-blue-600 rounded-lg">
+            <h4 class="font-semibold mb-2">Quick Tips:</h4>
+            <ul>
+                <li>Always ensure you have permission before scanning</li>
+                <li>Start with basic scans before using aggressive options</li>
+                <li>Read the tool's man page: <code>man ${toolName.toLowerCase()}</code></li>
+                <li>Use <code>${toolName.toLowerCase()} --help</code> for quick reference</li>
+            </ul>
+        </div>
+    `;
+}
+
+function addToFavorites(toolName) {
+    // Implementation for adding to favorites
+    showNotification(`${toolName} added to favorites`, 'success');
+}
+
+function shareTool(toolName) {
+    const url = `${window.location.origin}/tools#${toolName.toLowerCase()}`;
+    copyToClipboard(url);
+    showNotification('Tool link copied to clipboard', 'success');
+}
+
+function openModal(modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+K to focus search
+    if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('tool-search').focus();
+    }
+    
+    // Escape to close modals
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.fixed.inset-0').forEach(modal => {
+            if (!modal.classList.contains('hidden')) {
+                closeModal(modal);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
