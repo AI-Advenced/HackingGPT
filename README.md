@@ -59,7 +59,7 @@ REDIS_URL=redis://localhost:6379/0  # Optional
 
 1. **Clone the Repository**
 ```bash
-git clone https://github.com/yourusername/hackinggpt.git
+git clone https://github.com/AI-Advenced/HackingGPT/hackinggpt.git
 cd hackinggpt
 ```
 
