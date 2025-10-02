@@ -89,6 +89,8 @@ Edit `.env` file with your API keys.
 5. **Initialize Database**
 ```bash
 python app.py
+or
+python webview_app.py
 ```
 
 ### Method 2: Executable Installation
