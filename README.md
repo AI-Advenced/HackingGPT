@@ -4,6 +4,14 @@
 
 **HackingGPT** is an advanced AI-powered cybersecurity assistant designed for penetration testing, bug bounty hunting, and security analysis. It combines cutting-edge GPT models with practical security tools in both web and desktop interfaces.
 
+![HackingGPT](https://github.com/user-attachments/assets/12f2e976-93f8-43ee-9eec-e3dfa8cc7744)
+
+<img width="1367" height="848" alt="image" src="https://github.com/user-attachments/assets/2d3c4cb1-1922-4d2f-a04c-c2e5ee5b1312" />
+
+<img width="1517" height="641" alt="image" src="https://github.com/user-attachments/assets/c3315e1d-b03c-48f8-a966-0e652f2f474a" />
+
+
+
 ## 🚀 Features
 
 ### 🤖 AI-Powered Analysis
